@@ -51,17 +51,11 @@ app.use('/api/public', require('./src/routes/public'));
 
 // API health check
 app.get('/api', (req, res) => {
-    const raw = process.env.MONGODB_URI || '';
-    const prefix = raw.length > 20 ? raw.substring(0, 20) : raw;
     res.json({
         message: 'Campus Event Manager API is running',
         version: '1.0.3',
         status: 'ok',
-        mongoState: mongoose.connection.readyState,
-        mongoConnected: mongoose.connection.readyState === 1,
-        mongoError: lastMongoError,
-        rawLength: raw.length,
-        uriPrefix: prefix
+        mongoConnected: mongoose.connection.readyState === 1
     });
 });
 
