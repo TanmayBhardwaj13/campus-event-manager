@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Campus Event Manager - Discover & Join College Events</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/responsive.css">
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/utils.js"></script>
+  <style>
+    .landing-header {
+      background: #ffffff;
+      border-bottom: 1px solid var(--gray-200);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .landing-nav {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .landing-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: inherit;
+    }
+    .landing-brand-icon {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, var(--primary-600), var(--primary-500));
+      border-radius: var(--border-radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      color: #fff;
+    }
+    .landing-brand-text h1 {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--gray-900);
+      margin: 0;
+      line-height: 1.2;
+    }
+    .landing-brand-text span {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    .landing-nav-links {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .hero-section {
+      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 40%, #312e81 80%, #4338ca 100%);
+      color: #fff;
+      padding: 80px 24px 100px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-section::before {
+      content: '';
+      position: absolute;
+      top: -100px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 800px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.25) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-content {
+      max-width: 800px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 2;
+    }
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 6px 16px;
+      border-radius: 9999px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #e0e7ff;
+      margin-bottom: 24px;
+    }
+    .hero-title {
+      font-size: 3rem;
+      font-weight: 800;
+      line-height: 1.15;
+      margin-bottom: 20px;
+      letter-spacing: -0.02em;
+    }
+    .hero-subtitle {
+      font-size: 1.15rem;
+      color: #cbd5e1;
+      margin-bottom: 36px;
+      line-height: 1.6;
+    }
+    .hero-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .hero-btn-primary {
+      background: #6366f1;
+      color: #ffffff;
+      padding: 14px 28px;
+      border-radius: var(--border-radius-sm);
+      font-weight: 600;
+      text-decoration: none;
+      font-size: 1rem;
+      transition: background 0.2s;
+    }
+    .hero-btn-primary:hover {
+      background: #4f46e5;
+    }
+    .hero-btn-outline {
+      background: rgba(255, 255, 255, 0.1);
+      color: #ffffff;
+      padding: 14px 28px;
+      border-radius: var(--border-radius-sm);
+      font-weight: 600;
+      text-decoration: none;
+      font-size: 1rem;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      transition: all 0.2s;
+    }
+    .hero-btn-outline:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+    .stats-container {
+      max-width: 1000px;
+      margin: -40px auto 40px;
+      padding: 0 24px;
+      position: relative;
+      z-index: 10;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+      background: #fff;
+      padding: 28px;
+      border-radius: var(--border-radius);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+      border: 1px solid var(--gray-200);
+    }
+    .stat-box {
+      text-align: center;
+    }
+    .stat-val {
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: var(--primary-600);
+      margin-bottom: 4px;
+    }
+    .stat-label {
+      font-size: 0.85rem;
+      color: var(--gray-500);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .portals-section {
+      max-width: 1200px;
+      margin: 40px auto;
+      padding: 0 24px;
+    }
+    .section-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    .section-header h2 {
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--gray-900);
+      margin-bottom: 10px;
+    }
+    .section-header p {
+      font-size: 1rem;
+      color: var(--gray-600);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .portal-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 24px;
+    }
+    .portal-card {
+      background: #fff;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--border-radius);
+      padding: 32px 28px;
+      box-shadow: var(--shadow-sm);
+      transition: transform 0.2s, box-shadow 0.2s;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .portal-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-md);
+    }
+    .portal-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      margin-bottom: 20px;
+    }
+    .portal-card h3 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+      color: var(--gray-900);
+    }
+    .portal-card p {
+      font-size: 0.95rem;
+      color: var(--gray-600);
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+    .portal-actions {
+      display: flex;
+      gap: 12px;
+    }
+    .demo-credentials-banner {
+      max-width: 1200px;
+      margin: 40px auto 60px;
+      padding: 0 24px;
+    }
+    .demo-box {
+      background: #f8fafc;
+      border: 2px dashed #cbd5e1;
+      border-radius: var(--border-radius);
+      padding: 24px;
+    }
+    .demo-title {
+      font-weight: 700;
+      color: var(--gray-800);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .demo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+    }
+    .demo-role-card {
+      background: #fff;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--border-radius-sm);
+      padding: 14px 16px;
+    }
+    .demo-role-card h4 {
+      margin: 0 0 6px;
+      font-size: 0.95rem;
+      color: var(--primary-700);
+    }
+    .demo-role-card p {
+      margin: 0;
+      font-size: 0.85rem;
+      color: var(--gray-600);
+      line-height: 1.5;
+    }
+    .demo-role-card code {
+      background: #f1f5f9;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.82rem;
+    }
+  </style>
+</head>
+<body>
+  <!-- HEADER -->
+  <header class="landing-header">
+    <div class="landing-nav">
+      <a href="/" class="landing-brand">
+        <div class="landing-brand-icon">🎟️</div>
+        <div class="landing-brand-text">
+          <h1>CampusEvents</h1>
+          <span>College Management</span>
+        </div>
+      </a>
+      <div class="landing-nav-links">
+        <a href="student/login.html" class="btn btn-outline btn-sm">Student Login</a>
+        <a href="host/login.html" class="btn btn-ghost btn-sm">Host Login</a>
+        <a href="admin/login.html" class="btn btn-primary btn-sm">Admin Portal</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero-section">
+    <div class="hero-content">
+      <div class="hero-badge">✨ Centralized College Event Platform</div>
+      <h1 class="hero-title">Discover, Register & Experience Campus Life</h1>
+      <p class="hero-subtitle">
+        Join hackathons, cultural fests, workshops, and technical symposiums. Earn certificates, track event attendance, and manage campus activities in one place.
+      </p>
+      <div class="hero-buttons">
+        <a href="student/login.html" class="hero-btn-primary">Student Portal →</a>
+        <a href="host/login.html" class="hero-btn-outline">Host an Event ➕</a>
+        <a href="admin/login.html" class="hero-btn-outline">Admin Dashboard 🛡️</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- STATS -->
+  <div class="stats-container">
+    <div class="stats-grid">
+      <div class="stat-box">
+        <div class="stat-val" id="stat-events">12+</div>
+        <div class="stat-label">Campus Events</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val" id="stat-students">500+</div>
+        <div class="stat-label">Active Students</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val" id="stat-registrations">1,200+</div>
+        <div class="stat-label">Registrations</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val">100%</div>
+        <div class="stat-label">Verified Certificates</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PORTALS -->
+  <section class="portals-section">
+    <div class="section-header">
+      <h2>Select Your Workspace</h2>
+      <p>Log in or register based on your campus role to access customized dashboards and tools</p>
+    </div>
+
+    <div class="portal-cards">
+      <!-- STUDENT -->
+      <div class="portal-card">
+        <div>
+          <div class="portal-icon" style="background:#e0e7ff;color:#4338ca;">🎓</div>
+          <h3>Student Portal</h3>
+          <p>Explore upcoming events, register with 1-click, download verified participation certificates, and track your campus activity timeline.</p>
+        </div>
+        <div class="portal-actions">
+          <a href="student/login.html" class="btn btn-primary w-full">Sign In</a>
+          <a href="student/register.html" class="btn btn-outline w-full">Register</a>
+        </div>
+      </div>
+
+      <!-- HOST -->
+      <div class="portal-card">
+        <div>
+          <div class="portal-icon" style="background:#fef3c7;color:#d97706;">🎤</div>
+          <h3>Host / Organizer Portal</h3>
+          <p>Create and publish events, track participant registrations in real time, mark attendance, issue digital certificates, and analyze engagement.</p>
+        </div>
+        <div class="portal-actions">
+          <a href="host/login.html" class="btn btn-primary w-full">Host Login</a>
+          <a href="host/register.html" class="btn btn-outline w-full">Register</a>
+        </div>
+      </div>
+
+      <!-- ADMIN -->
+      <div class="portal-card">
+        <div>
+          <div class="portal-icon" style="background:#fce7f3;color:#be185d;">🛡️</div>
+          <h3>Admin Portal</h3>
+          <p>Manage departments, clubs, event categories, review and approve event submissions, oversee host verifications, and inspect campus analytics.</p>
+        </div>
+        <div class="portal-actions">
+          <a href="admin/login.html" class="btn btn-primary w-full">Admin Login</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DEMO CREDENTIALS -->
+  <section class="demo-credentials-banner">
+    <div class="demo-box">
+      <div class="demo-title">🔑 Demo Accounts for Quick Evaluation</div>
+      <div class="demo-grid">
+        <div class="demo-role-card">
+          <h4>Administrator</h4>
+          <p>Email: <code>admin@college.edu</code></p>
+          <p>Password: <code>Admin@123</code></p>
+          <a href="admin/login.html" style="font-size:0.8rem;color:var(--primary-600);font-weight:600;margin-top:6px;display:inline-block;">Go to Admin Login →</a>
+        </div>
+        <div class="demo-role-card">
+          <h4>Event Host (Faculty/Club)</h4>
+          <p>Email: <code>arjun.kumar@college.edu</code></p>
+          <p>Password: <code>Host@123</code></p>
+          <a href="host/login.html" style="font-size:0.8rem;color:var(--primary-600);font-weight:600;margin-top:6px;display:inline-block;">Go to Host Login →</a>
+        </div>
+        <div class="demo-role-card">
+          <h4>Student</h4>
+          <p>Email: <code>rahul.verma@student.college.edu</code></p>
+          <p>Password: <code>Student@123</code></p>
+          <a href="student/login.html" style="font-size:0.8rem;color:var(--primary-600);font-weight:600;margin-top:6px;display:inline-block;">Go to Student Login →</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer style="text-align:center;padding:32px 24px;border-top:1px solid var(--gray-200);color:var(--gray-500);font-size:0.85rem;">
+    &copy; Campus Event Manager. All rights reserved.
+  </footer>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        const statsRes = await api.public.getStats();
+        if (statsRes && statsRes.data) {
+          const { totalEvents, totalStudents, totalRegistrations } = statsRes.data;
+          if (totalEvents !== undefined) document.getElementById('stat-events').textContent = totalEvents;
+          if (totalStudents !== undefined) document.getElementById('stat-students').textContent = totalStudents;
+          if (totalRegistrations !== undefined) document.getElementById('stat-registrations').textContent = totalRegistrations;
+        }
+      } catch (e) {
+        // Fallback default stats displayed
+      }
+    });
+  </script>
+</body>
+</html>
+

@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notifications | Campus Event Manager</title>
+  <meta name="description" content="View reminders, registration updates, and announcements from Campus Event Manager.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/utils.js"></script>
+  <style>
+    .notif-container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .notif-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+    .notif-item {
+      background: #ffffff;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--border-radius);
+      padding: 16px 20px;
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      transition: var(--transition);
+      cursor: pointer;
+      position: relative;
+    }
+    .notif-item:hover {
+      box-shadow: var(--shadow-sm);
+      transform: translateY(-1px);
+    }
+    .notif-item.unread {
+      background: #f8faff;
+      border-left: 4px solid var(--primary);
+      border-color: #c7d2fe;
+    }
+    .notif-item.unread .notif-title {
+      font-weight: 700;
+      color: var(--gray-900);
+    }
+    .notif-icon-circle {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      flex-shrink: 0;
+    }
+    .notif-body {
+      flex: 1;
+      min-width: 0;
+    }
+    .notif-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--gray-800);
+      margin-bottom: 3px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .notif-unread-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--primary);
+      display: inline-block;
+    }
+    .notif-message {
+      font-size: 0.88rem;
+      color: var(--gray-600);
+      line-height: 1.45;
+      margin-bottom: 6px;
+    }
+    .notif-time {
+      font-size: 0.78rem;
+      color: var(--gray-400);
+    }
+    .notif-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="sidebar-overlay"></div>
+
+  <div class="dashboard-layout">
+    <!-- STUDENT SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-icon">🎓</div>
+        <div class="sidebar-brand-text">
+          <div class="brand-name">CampusEvents</div>
+          <div class="brand-role">Student Portal</div>
+        </div>
+      </div>
+      <ul class="sidebar-nav" style="padding:12px">
+        <li><a href="dashboard.html"><span class="nav-icon">🏠</span> Dashboard</a></li>
+        <li><a href="events.html"><span class="nav-icon">🔍</span> Discover Events</a></li>
+        <li><a href="my-events.html"><span class="nav-icon">📅</span> My Events</a></li>
+        <li><a href="saved.html"><span class="nav-icon">📌</span> Saved Events</a></li>
+        <li><a href="activity.html"><span class="nav-icon">⏱️</span> Activity</a></li>
+        <li><a href="certificates.html"><span class="nav-icon">🎓</span> Certificates</a></li>
+        <li><a href="notifications.html"><span class="nav-icon">🔔</span> Notifications <span class="nav-badge" id="notif-count" style="display:none">0</span></a></li>
+        <li><a href="profile.html"><span class="nav-icon">👤</span> Profile</a></li>
+      </ul>
+      <div class="sidebar-footer">
+        <div class="sidebar-user">
+          <div class="sidebar-user-avatar" id="sidebar-user-avatar">S</div>
+          <div class="sidebar-user-info">
+            <div class="sidebar-user-name" id="sidebar-user-name">Student</div>
+            <div class="sidebar-user-role" id="sidebar-user-role">student</div>
+          </div>
+        </div>
+        <button class="btn btn-ghost w-full" style="color:#94a3b8;margin-top:8px" onclick="auth.logoutRole('student')">Logout</button>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+      <!-- TOPBAR -->
+      <header class="topbar">
+        <button class="topbar-menu-btn" id="sidebar-toggle" aria-label="Toggle navigation">☰</button>
+        <div>
+          <div class="topbar-title">Notifications</div>
+          <div class="topbar-subtitle">Updates, event reminders, and registration notices</div>
+        </div>
+        <div class="topbar-actions">
+          <a href="profile.html" class="topbar-icon-btn" title="My Profile">👤</a>
+        </div>
+      </header>
+
+      <!-- PAGE CONTENT -->
+      <div class="page-content">
+        <div class="notif-container">
+
+          <div class="page-header">
+            <div class="page-header-left">
+              <h2>All Notifications (<span id="unread-count-text">0</span> unread)</h2>
+              <p>Stay informed about your registrations and event alerts.</p>
+            </div>
+            <div class="page-header-actions">
+              <button id="mark-all-btn" class="btn btn-outline btn-sm" onclick="handleMarkAllRead()">
+                ✓ Mark All as Read
+              </button>
+            </div>
+          </div>
+
+          <!-- Notification Items List -->
+          <div id="notifications-list" class="notif-list">
+            <div class="skeleton" style="height:76px;border-radius:var(--border-radius);"></div>
+            <div class="skeleton" style="height:76px;border-radius:var(--border-radius);"></div>
+            <div class="skeleton" style="height:76px;border-radius:var(--border-radius);"></div>
+          </div>
+
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    let notificationsData = [];
+
+    function getNotifConfig(type) {
+      switch(type) {
+        case 'registration':
+          return { icon: '✅', bg: 'var(--success-bg)', color: 'var(--success-dark)' };
+        case 'cancellation':
+          return { icon: '❌', bg: 'var(--danger-bg)', color: 'var(--danger-dark)' };
+        case 'reminder':
+          return { icon: '⏰', bg: 'var(--warning-bg)', color: 'var(--warning-dark)' };
+        case 'certificate':
+          return { icon: '🎓', bg: '#f3e8ff', color: '#7c3aed' };
+        default:
+          return { icon: '🔔', bg: 'var(--primary-bg)', color: 'var(--primary)' };
+      }
+    }
+
+    function renderNotifItem(item) {
+      const cfg = getNotifConfig(item.type);
+      const isUnread = !item.read;
+
+      return `
+        <div class="notif-item ${isUnread ? 'unread' : ''}" onclick="handleNotificationClick('${item._id}', ${isUnread})">
+          <div class="notif-icon-circle" style="background:${cfg.bg};color:${cfg.color};">
+            ${cfg.icon}
+          </div>
+          <div class="notif-body">
+            <div class="notif-title">
+              <span>${item.title}</span>
+              ${isUnread ? '<span class="notif-unread-dot" title="Unread notification"></span>' : ''}
+            </div>
+            <div class="notif-message">${item.message}</div>
+            <div class="notif-time">${fmt.relativeTime(item.createdAt)}</div>
+          </div>
+          <div class="notif-actions">
+            ${isUnread 
+              ? `<button class="btn btn-ghost btn-sm" style="font-size:0.75rem;" onclick="event.stopPropagation(); handleSingleRead('${item._id}')">Mark Read</button>`
+              : '<span class="text-xs text-muted">✓ Read</span>'
+            }
+          </div>
+        </div>
+      `;
+    }
+
+    async function handleSingleRead(id) {
+      try {
+        await api.student.markNotificationRead(id);
+        const item = notificationsData.find(n => n._id === id);
+        if (item) item.read = true;
+        renderNotifications();
+        updateUnreadBadges();
+      } catch (err) {
+        console.error('Mark notification read error:', err);
+      }
+    }
+
+    async function handleNotificationClick(id, isUnread) {
+      if (isUnread) {
+        await handleSingleRead(id);
+      }
+    }
+
+    async function handleMarkAllRead() {
+      loader.show();
+      try {
+        await api.student.markAllRead();
+        toast.success('All notifications marked as read');
+        notificationsData.forEach(n => n.read = true);
+        renderNotifications();
+        updateUnreadBadges();
+      } catch (err) {
+        toast.error(err.message || 'Failed to mark all as read.');
+      } finally {
+        loader.hide();
+      }
+    }
+
+    function updateUnreadBadges() {
+      const unreadCount = notificationsData.filter(n => !n.read).length;
+      document.getElementById('unread-count-text').textContent = unreadCount;
+
+      const sideNotif = document.getElementById('notif-count');
+      if (sideNotif) {
+        if (unreadCount > 0) {
+          sideNotif.textContent = unreadCount;
+          sideNotif.style.display = 'inline-block';
+        } else {
+          sideNotif.style.display = 'none';
+        }
+      }
+
+      const markBtn = document.getElementById('mark-all-btn');
+      if (markBtn) {
+        markBtn.disabled = unreadCount === 0;
+      }
+    }
+
+    function renderNotifications() {
+      const listEl = document.getElementById('notifications-list');
+
+      if (notificationsData.length === 0) {
+        listEl.innerHTML = `
+          <div style="background:#fff;border-radius:var(--border-radius);border:1px dashed var(--gray-300);padding:56px 20px;text-align:center;">
+            ${emptyState('🔔', 'No Notifications Yet', 'You are all caught up! You will be notified here when registration updates or event reminders occur.')}
+          </div>
+        `;
+        return;
+      }
+
+      listEl.innerHTML = notificationsData.map(item => renderNotifItem(item)).join('');
+    }
+
+    async function loadNotifications() {
+      try {
+        const res = await api.student.getNotifications();
+        notificationsData = res.data || [];
+        renderNotifications();
+        updateUnreadBadges();
+      } catch (err) {
+        console.error('Failed to load notifications:', err);
+        const listEl = document.getElementById('notifications-list');
+        listEl.innerHTML = `
+          <div style="background:#fff;border-radius:var(--border-radius);padding:40px;text-align:center;">
+            ${emptyState('⚠️', 'Error Loading Notifications', 'Unable to retrieve notifications from server.')}
+          </div>
+        `;
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!auth.requireRole('student', '../student/login.html')) return;
+      auth.populateSidebarUser();
+      setActiveNavLink();
+      initSidebarToggle();
+      await loadNotifications();
+    });
+  </script>
+</body>
+</html>

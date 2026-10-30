@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Events - Host Portal - Campus Event Manager</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/utils.js"></script>
+</head>
+<body>
+  <div class="sidebar-overlay"></div>
+
+  <div class="dashboard-layout">
+    <!-- HOST SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-icon">🎟️</div>
+        <div class="sidebar-brand-text">
+          <div class="brand-name">CampusEvents</div>
+          <div class="brand-role">Host Portal</div>
+        </div>
+      </div>
+      <ul class="sidebar-nav" style="padding:12px">
+        <li><a href="dashboard.html"><span class="nav-icon">🏠</span> Dashboard</a></li>
+        <li><a href="events.html"><span class="nav-icon">📅</span> My Events</a></li>
+        <li><a href="create-event.html"><span class="nav-icon">➕</span> Create Event</a></li>
+        <li><a href="analytics.html"><span class="nav-icon">📊</span> Analytics</a></li>
+        <li><a href="profile.html"><span class="nav-icon">👤</span> Profile</a></li>
+      </ul>
+      <div class="sidebar-footer">
+        <div class="sidebar-user" onclick="window.location.href='profile.html'">
+          <div class="sidebar-user-avatar" id="sidebar-user-avatar">H</div>
+          <div class="sidebar-user-info">
+            <div class="sidebar-user-name" id="sidebar-user-name">Host</div>
+            <div class="sidebar-user-role" id="sidebar-user-role">host</div>
+          </div>
+        </div>
+        <button class="btn btn-ghost w-full" style="color:#94a3b8;margin-top:8px" onclick="auth.logoutRole('host')">Logout</button>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+      <!-- TOPBAR -->
+      <header class="topbar">
+        <button class="topbar-menu-btn" id="sidebar-toggle" aria-label="Toggle navigation menu">☰</button>
+        <div>
+          <div class="topbar-title">Event Management</div>
+          <div class="topbar-subtitle">Create, monitor, submit, and manage all your campus events</div>
+        </div>
+        <div class="topbar-actions">
+          <a href="create-event.html" class="btn btn-primary btn-sm">
+            <span>➕ Create Event</span>
+          </a>
+        </div>
+      </header>
+
+      <!-- PAGE CONTENT -->
+      <div class="page-content">
+        <!-- PAGE HEADER -->
+        <div class="page-header">
+          <div class="page-header-left">
+            <h2>My Organized Events</h2>
+            <p>Filter by approval and lifecycle stages to view participants, edit drafts, or submit events for verification.</p>
+          </div>
+          <div class="page-header-actions">
+            <a href="create-event.html" class="btn btn-primary">
+              <span>➕ New Event</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- TABS -->
+        <div class="tabs" id="event-tabs" style="overflow-x: auto; white-space: nowrap;">
+          <button class="tab-btn active" data-tab="all">
+            All <span class="tab-count" id="count-all">0</span>
+          </button>
+          <button class="tab-btn" data-tab="draft">
+            Draft <span class="tab-count" id="count-draft">0</span>
+          </button>
+          <button class="tab-btn" data-tab="pending">
+            Pending Approval <span class="tab-count" id="count-pending">0</span>
+          </button>
+          <button class="tab-btn" data-tab="published">
+            Published <span class="tab-count" id="count-published">0</span>
+          </button>
+          <button class="tab-btn" data-tab="upcoming">
+            Upcoming <span class="tab-count" id="count-upcoming">0</span>
+          </button>
+          <button class="tab-btn" data-tab="ongoing">
+            Ongoing <span class="tab-count" id="count-ongoing">0</span>
+          </button>
+          <button class="tab-btn" data-tab="completed">
+            Completed <span class="tab-count" id="count-completed">0</span>
+          </button>
+          <button class="tab-btn" data-tab="cancelled">
+            Cancelled <span class="tab-count" id="count-cancelled">0</span>
+          </button>
+        </div>
+
+        <!-- SEARCH & FILTER BAR -->
+        <div class="table-wrapper" style="margin-bottom: 24px;">
+          <div class="table-header">
+            <div style="font-weight: 700; color: var(--gray-800);" id="active-tab-title">
+              All Events (<span id="filtered-count">0</span>)
+            </div>
+            <div class="table-controls">
+              <!-- Search -->
+              <div class="search-input-wrap">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="search-input" class="search-input" placeholder="Search events by title or venue...">
+              </div>
+              <!-- Category Filter -->
+              <select id="category-filter" class="filter-select">
+                <option value="">All Categories</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- TABLE -->
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th style="min-width: 220px;">Event Title</th>
+                  <th>Category</th>
+                  <th>Date & Time</th>
+                  <th>Venue</th>
+                  <th style="min-width: 150px;">Registrations</th>
+                  <th>Approval Status</th>
+                  <th>Event Status</th>
+                  <th style="text-align: right; min-width: 170px;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="events-tbody">
+                <tr>
+                  <td colspan="8" style="text-align:center; padding: 40px; color:var(--gray-400);">
+                    Loading events...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    let allEvents = [];
+    let currentTab = 'all';
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!auth.requireRole('host', '../host/login.html')) return;
+      auth.populateSidebarUser();
+      setActiveNavLink();
+      initSidebarToggle();
+
+      setupTabListeners();
+      setupSearchAndFilters();
+      await loadCategories();
+      await loadEvents();
+    });
+
+    async function loadCategories() {
+      try {
+        const res = await api.public.getCategories();
+        if (res.success && Array.isArray(res.data)) {
+          const select = document.getElementById('category-filter');
+          res.data.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c._id;
+            opt.textContent = c.name;
+            select.appendChild(opt);
+          });
+        }
+      } catch (err) {
+        console.error('Failed to load categories', err);
+      }
+    }
+
+    async function loadEvents() {
+      loader.show();
+      try {
+        const res = await api.host.getEvents();
+        loader.hide();
+
+        if (res.success && Array.isArray(res.data)) {
+          allEvents = res.data;
+          updateTabCounts();
+          renderFilteredEvents();
+        } else {
+          allEvents = [];
+          renderFilteredEvents();
+        }
+      } catch (err) {
+        loader.hide();
+        toast.error('Failed to load events: ' + err.message);
+      }
+    }
+
+    function setupTabListeners() {
+      const tabButtons = document.querySelectorAll('#event-tabs .tab-btn');
+      tabButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          tabButtons.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          currentTab = btn.getAttribute('data-tab');
+          renderFilteredEvents();
+        });
+      });
+    }
+
+    function setupSearchAndFilters() {
+      document.getElementById('search-input').addEventListener('input', () => {
+        renderFilteredEvents();
+      });
+      document.getElementById('category-filter').addEventListener('change', () => {
+        renderFilteredEvents();
+      });
+    }
+
+    function updateTabCounts() {
+      const counts = {
+        all: allEvents.length,
+        draft: allEvents.filter(e => e.approvalStatus === 'draft').length,
+        pending: allEvents.filter(e => e.approvalStatus === 'pending').length,
+        published: allEvents.filter(e => e.approvalStatus === 'published').length,
+        upcoming: allEvents.filter(e => e.eventStatus === 'upcoming' && e.approvalStatus === 'published').length,
+        ongoing: allEvents.filter(e => e.eventStatus === 'ongoing').length,
+        completed: allEvents.filter(e => e.eventStatus === 'completed').length,
+        cancelled: allEvents.filter(e => e.eventStatus === 'cancelled').length,
+      };
+
+      for (const [key, val] of Object.entries(counts)) {
+        const el = document.getElementById(`count-${key}`);
+        if (el) el.textContent = val;
+      }
+    }
+
+    function filterEvents() {
+      const searchTerm = document.getElementById('search-input').value.trim().toLowerCase();
+      const catId = document.getElementById('category-filter').value;
+
+      return allEvents.filter(ev => {
+        // Tab filtering
+        let matchTab = true;
+        if (currentTab === 'draft') matchTab = (ev.approvalStatus === 'draft');
+        else if (currentTab === 'pending') matchTab = (ev.approvalStatus === 'pending');
+        else if (currentTab === 'published') matchTab = (ev.approvalStatus === 'published');
+        else if (currentTab === 'upcoming') matchTab = (ev.eventStatus === 'upcoming' && ev.approvalStatus === 'published');
+        else if (currentTab === 'ongoing') matchTab = (ev.eventStatus === 'ongoing');
+        else if (currentTab === 'completed') matchTab = (ev.eventStatus === 'completed');
+        else if (currentTab === 'cancelled') matchTab = (ev.eventStatus === 'cancelled');
+
+        if (!matchTab) return false;
+
+        // Search filtering
+        if (searchTerm) {
+          const title = (ev.title || '').toLowerCase();
+          const desc = (ev.description || '').toLowerCase();
+          const bldg = (ev.building || '').toLowerCase();
+          const room = (ev.room || '').toLowerCase();
+          if (!title.includes(searchTerm) && !desc.includes(searchTerm) && !bldg.includes(searchTerm) && !room.includes(searchTerm)) {
+            return false;
+          }
+        }
+
+        // Category filtering
+        if (catId) {
+          const evCatId = ev.categoryId?._id || ev.categoryId;
+          if (evCatId !== catId) return false;
+        }
+
+        return true;
+      });
+    }
+
+    function renderFilteredEvents() {
+      const filtered = filterEvents();
+      const countEl = document.getElementById('filtered-count');
+      if (countEl) countEl.textContent = filtered.length;
+
+      const tabTitleEl = document.getElementById('active-tab-title');
+      const tabNames = {
+        all: 'All Events',
+        draft: 'Draft Events',
+        pending: 'Pending Approval Events',
+        published: 'Published Events',
+        upcoming: 'Upcoming Events',
+        ongoing: 'Ongoing Events',
+        completed: 'Completed Events',
+        cancelled: 'Cancelled Events',
+      };
+      if (tabTitleEl) tabTitleEl.textContent = `${tabNames[currentTab] || 'Events'} (${filtered.length})`;
+
+      const tbody = document.getElementById('events-tbody');
+      if (filtered.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="8">
+              ${emptyState('📅', 'No Events Found', 'No events match the selected filter criteria.', '<a href="create-event.html" class="btn btn-primary btn-sm" style="margin-top:8px;">➕ Create Event</a>')}
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(ev => {
+        const catName = ev.categoryId?.name || 'General';
+        const catColor = ev.categoryId?.color || '#4f46e5';
+        const venueStr = [ev.building, ev.room].filter(Boolean).join(', ') || 'Campus Venue';
+        const max = ev.maxParticipants || 100;
+        const current = ev.currentRegistrations || 0;
+
+        // Determine actions per tab / status
+        let actionsHtml = `<a href="event-detail.html?id=${ev._id}" class="btn btn-light btn-sm" title="View Event Details">Details</a>`;
+
+        if (ev.approvalStatus === 'draft' || ev.approvalStatus === 'rejected') {
+          actionsHtml = `
+            <a href="create-event.html?id=${ev._id}" class="btn btn-outline btn-sm" title="Edit Event">Edit</a>
+            <button class="btn btn-primary btn-sm" onclick="handleSubmitApproval('${ev._id}', '${escapeQuotes(ev.title)}')" title="Submit for Approval">Submit</button>
+            <button class="btn btn-outline-danger btn-sm" onclick="handleDeleteEvent('${ev._id}', '${escapeQuotes(ev.title)}')" title="Delete Draft">🗑️</button>
+          `;
+        } else if (ev.approvalStatus === 'pending') {
+          actionsHtml = `
+            <a href="event-detail.html?id=${ev._id}" class="btn btn-light btn-sm">Details</a>
+            <span class="badge badge-warning" style="font-size:0.75rem;">Under Review</span>
+          `;
+        } else if (ev.approvalStatus === 'published') {
+          if (ev.eventStatus === 'upcoming' || ev.eventStatus === 'ongoing') {
+            actionsHtml = `
+              <a href="event-detail.html?id=${ev._id}" class="btn btn-light btn-sm">Details</a>
+              <a href="participants.html?id=${ev._id}" class="btn btn-outline btn-sm" title="View & Mark Attendance">Participants</a>
+              <button class="btn btn-outline-danger btn-sm" onclick="handleCancelEvent('${ev._id}', '${escapeQuotes(ev.title)}')" title="Cancel Event">Cancel</button>
+            `;
+          } else if (ev.eventStatus === 'completed') {
+            actionsHtml = `
+              <a href="event-detail.html?id=${ev._id}" class="btn btn-light btn-sm">Details</a>
+              <a href="participants.html?id=${ev._id}" class="btn btn-outline btn-sm" title="Manage Certificates & Attendance">Participants</a>
+            `;
+          } else if (ev.eventStatus === 'cancelled') {
+            actionsHtml = `
+              <a href="event-detail.html?id=${ev._id}" class="btn btn-light btn-sm">Details</a>
+              <span class="badge badge-danger">Cancelled</span>
+            `;
+          }
+        }
+
+        return `
+          <tr>
+            <td>
+              <div style="display:flex; align-items:center; gap:12px;">
+                <div style="width:40px; height:40px; border-radius:8px; background:linear-gradient(135deg, ${catColor}20, #e0e7ff); display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0;">
+                  ${ev.image ? `<img src="${imgUrl(ev.image)}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;" onerror="this.parentElement.textContent='🎟️'">` : '🎟️'}
+                </div>
+                <div>
+                  <div style="font-weight: 700; color: var(--gray-900); font-size: 0.92rem;">
+                    <a href="event-detail.html?id=${ev._id}" style="color:var(--gray-900);">${ev.title}</a>
+                  </div>
+                  <div style="font-size: 0.76rem; color: var(--gray-500);">
+                    ID: ${ev._id.slice(-6)}
+                  </div>
+                </div>
+              </div>
+            </td>
+            <td>
+              <span class="badge" style="background:${catColor}15; color:${catColor}; font-weight:600;">
+                ${catName}
+              </span>
+            </td>
+            <td>
+              <div style="font-weight: 600; font-size: 0.85rem;">${fmt.shortDate(ev.date)}</div>
+              <div style="font-size: 0.75rem; color: var(--gray-500);">${ev.startTime || ''} - ${ev.endTime || ''}</div>
+            </td>
+            <td>
+              <div style="font-size: 0.85rem; color: var(--gray-800);">${venueStr}</div>
+            </td>
+            <td>
+              ${progressBar(current, max)}
+            </td>
+            <td>${badge.approvalStatus(ev.approvalStatus)}</td>
+            <td>${badge.eventStatus(ev.eventStatus)}</td>
+            <td style="text-align: right; white-space: nowrap;">
+              <div style="display:inline-flex; gap:6px; align-items:center; justify-content:flex-end;">
+                ${actionsHtml}
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function escapeQuotes(str) {
+      if (!str) return '';
+      return str.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    }
+
+    // Handlers
+    async function handleSubmitApproval(id, title) {
+      const ok = await modal.confirm({
+        title: 'Submit Event for Admin Approval?',
+        message: `Are you ready to submit "${title}" for administrator review? Once approved, the event will be published for student registrations.`,
+        confirmText: 'Submit for Approval',
+        type: 'primary'
+      });
+      if (!ok) return;
+
+      loader.show();
+      try {
+        const res = await api.host.submitEvent(id);
+        loader.hide();
+        toast.success(res.message || 'Event submitted successfully!');
+        await loadEvents();
+      } catch (err) {
+        loader.hide();
+        toast.error('Failed to submit: ' + err.message);
+      }
+    }
+
+    async function handleCancelEvent(id, title) {
+      const ok = await modal.confirm({
+        title: 'Cancel Campus Event?',
+        message: `Are you sure you want to cancel "${title}"? All registered students will receive a cancellation notice. This action cannot be undone.`,
+        confirmText: 'Yes, Cancel Event',
+        type: 'danger'
+      });
+      if (!ok) return;
+
+      loader.show();
+      try {
+        const res = await api.host.cancelEvent(id);
+        loader.hide();
+        toast.success('Event cancelled successfully.');
+        await loadEvents();
+      } catch (err) {
+        loader.hide();
+        toast.error('Failed to cancel event: ' + err.message);
+      }
+    }
+
+    async function handleDeleteEvent(id, title) {
+      const ok = await modal.confirm({
+        title: 'Delete Draft Event?',
+        message: `Permanently delete the draft for "${title}"?`,
+        confirmText: 'Delete Permanently',
+        type: 'danger'
+      });
+      if (!ok) return;
+
+      loader.show();
+      try {
+        const res = await api.host.deleteEvent(id);
+        loader.hide();
+        toast.success('Draft event deleted.');
+        await loadEvents();
+      } catch (err) {
+        loader.hide();
+        toast.error('Failed to delete event: ' + err.message);
+      }
+    }
+  </script>
+</body>
+</html>

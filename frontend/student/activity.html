@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Activity Log | Campus Event Manager</title>
+  <meta name="description" content="Chronological activity history of your event registrations, attendance records, and cancellations.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/utils.js"></script>
+  <style>
+    .activity-container {
+      max-width: 840px;
+      margin: 0 auto;
+    }
+    .date-group-header {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--gray-400);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin: 24px 0 14px 48px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .date-group-header::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--gray-200);
+    }
+    .activity-card {
+      background: #ffffff;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--border-radius);
+      padding: 16px 20px;
+      box-shadow: var(--shadow-sm);
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .activity-card:hover {
+      box-shadow: var(--shadow-md);
+      border-color: var(--primary-light);
+    }
+    .activity-meta-badge {
+      font-size: 0.75rem;
+      color: var(--gray-400);
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="sidebar-overlay"></div>
+
+  <div class="dashboard-layout">
+    <!-- STUDENT SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-icon">🎓</div>
+        <div class="sidebar-brand-text">
+          <div class="brand-name">CampusEvents</div>
+          <div class="brand-role">Student Portal</div>
+        </div>
+      </div>
+      <ul class="sidebar-nav" style="padding:12px">
+        <li><a href="dashboard.html"><span class="nav-icon">🏠</span> Dashboard</a></li>
+        <li><a href="events.html"><span class="nav-icon">🔍</span> Discover Events</a></li>
+        <li><a href="my-events.html"><span class="nav-icon">📅</span> My Events</a></li>
+        <li><a href="saved.html"><span class="nav-icon">📌</span> Saved Events</a></li>
+        <li><a href="activity.html"><span class="nav-icon">⏱️</span> Activity</a></li>
+        <li><a href="certificates.html"><span class="nav-icon">🎓</span> Certificates</a></li>
+        <li><a href="notifications.html"><span class="nav-icon">🔔</span> Notifications <span class="nav-badge" id="notif-count" style="display:none">0</span></a></li>
+        <li><a href="profile.html"><span class="nav-icon">👤</span> Profile</a></li>
+      </ul>
+      <div class="sidebar-footer">
+        <div class="sidebar-user">
+          <div class="sidebar-user-avatar" id="sidebar-user-avatar">S</div>
+          <div class="sidebar-user-info">
+            <div class="sidebar-user-name" id="sidebar-user-name">Student</div>
+            <div class="sidebar-user-role" id="sidebar-user-role">student</div>
+          </div>
+        </div>
+        <button class="btn btn-ghost w-full" style="color:#94a3b8;margin-top:8px" onclick="auth.logoutRole('student')">Logout</button>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+      <!-- TOPBAR -->
+      <header class="topbar">
+        <button class="topbar-menu-btn" id="sidebar-toggle" aria-label="Toggle navigation">☰</button>
+        <div>
+          <div class="topbar-title">Student Activity Timeline</div>
+          <div class="topbar-subtitle">Audit trail of all your campus event interactions</div>
+        </div>
+        <div class="topbar-actions">
+          <a href="events.html" class="btn btn-primary btn-sm"><span>🔍</span> Discover Events</a>
+          <a href="notifications.html" class="topbar-icon-btn notif-bell" title="Notifications">
+            🔔
+            <span class="notif-badge" id="topbar-notif-badge" style="display:none">0</span>
+          </a>
+          <a href="profile.html" class="topbar-icon-btn" title="My Profile">👤</a>
+        </div>
+      </header>
+
+      <!-- PAGE CONTENT -->
+      <div class="page-content">
+        <div class="activity-container">
+
+          <div class="page-header">
+            <div class="page-header-left">
+              <h2>Recent Actions & History</h2>
+              <p>Everything you've registered for, attended, or modified on CampusEvents.</p>
+            </div>
+            <div class="page-header-actions">
+              <button class="btn btn-outline btn-sm" onclick="loadActivityLog()">
+                ↻ Refresh Log
+              </button>
+            </div>
+          </div>
+
+          <!-- Activity Timeline Container -->
+          <div id="timeline-container">
+            <div class="skeleton" style="height:80px;margin-bottom:16px;border-radius:var(--border-radius);"></div>
+            <div class="skeleton" style="height:80px;margin-bottom:16px;border-radius:var(--border-radius);"></div>
+            <div class="skeleton" style="height:80px;border-radius:var(--border-radius);"></div>
+          </div>
+
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Group activities by date
+    function getGroupLabel(dateStr) {
+      if (!dateStr) return 'Earlier';
+      const date = new Date(dateStr);
+      const today = new Date();
+      const yesterday = new Date();
+      yesterday.setDate(today.getDate() - 1);
+
+      if (date.toDateString() === today.toDateString()) return 'Today';
+      if (date.toDateString() === yesterday.toDateString()) return 'Yesterday';
+      return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    }
+
+    async function loadActivityLog() {
+      const container = document.getElementById('timeline-container');
+      container.innerHTML = `
+        <div class="skeleton" style="height:70px;margin-bottom:16px;border-radius:var(--border-radius);"></div>
+        <div class="skeleton" style="height:70px;margin-bottom:16px;border-radius:var(--border-radius);"></div>
+        <div class="skeleton" style="height:70px;border-radius:var(--border-radius);"></div>
+      `;
+
+      try {
+        const res = await api.student.getActivity();
+        const activities = res.data || [];
+
+        if (activities.length === 0) {
+          container.innerHTML = `
+            <div style="background:#fff;border-radius:var(--border-radius);border:1px dashed var(--gray-300);padding:60px 20px;text-align:center;">
+              ${emptyState('⏱️', 'No Activity Yet', 'Start exploring campus events and sign up to see your activity timeline here!', '<a href="events.html" class="btn btn-primary btn-sm">Explore Campus Events</a>')}
+            </div>
+          `;
+          return;
+        }
+
+        // Group by Date label
+        const groups = {};
+        activities.forEach(item => {
+          const timestamp = item.updatedAt || item.registeredAt || item.createdAt;
+          const label = getGroupLabel(timestamp);
+          if (!groups[label]) groups[label] = [];
+          groups[label].push(item);
+        });
+
+        let fullHtml = '<div class="timeline">';
+
+        Object.keys(groups).forEach(label => {
+          fullHtml += `<div class="date-group-header">${label}</div>`;
+
+          groups[label].forEach(item => {
+            const event = item.eventId;
+            const eventTitle = event ? event.title : 'Campus Event';
+            const eventId = event ? event._id : null;
+            const timestamp = item.updatedAt || item.registeredAt || item.createdAt;
+
+            let dotColor = '#10b981';
+            let dotIcon = '✅';
+            let actionBadge = '<span class="badge badge-success">Registered</span>';
+            let actionDesc = 'Successfully registered a confirmed seat';
+
+            if (item.status === 'cancelled') {
+              dotColor = '#ef4444';
+              dotIcon = '❌';
+              actionBadge = '<span class="badge badge-danger">Cancelled</span>';
+              actionDesc = 'Cancelled event registration';
+            } else if (item.status === 'waitlisted') {
+              dotColor = '#f59e0b';
+              dotIcon = '⌛';
+              actionBadge = '<span class="badge badge-warning">Waitlisted</span>';
+              actionDesc = 'Joined the waitlist queue for this event';
+            } else if (item.attendanceStatus === 'present') {
+              dotColor = '#3b82f6';
+              dotIcon = '🎯';
+              actionBadge = '<span class="badge badge-primary">Attended</span>';
+              actionDesc = 'Attendance marked present by coordinator';
+            }
+
+            fullHtml += `
+              <div class="timeline-item">
+                <div class="timeline-line">
+                  <div class="timeline-dot" style="background:${dotColor}18;color:${dotColor};border:2px solid ${dotColor}">
+                    ${dotIcon}
+                  </div>
+                  <div class="timeline-connector"></div>
+                </div>
+                <div class="timeline-content">
+                  <div class="activity-card">
+                    <div>
+                      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap;">
+                        ${actionBadge}
+                        <h4 style="font-size:0.95rem;font-weight:700;color:var(--gray-900);margin:0;">
+                          ${eventTitle}
+                        </h4>
+                      </div>
+                      <p style="font-size:0.83rem;color:var(--gray-500);margin:0;">
+                        ${actionDesc} ${event && event.date ? `&bull; Event Date: ${fmt.date(event.date)}` : ''}
+                      </p>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:12px;">
+                      <div class="activity-meta-badge">
+                        ${fmt.relativeTime(timestamp)}
+                      </div>
+                      ${eventId ? `<a href="../events/detail.html?id=${eventId}" class="btn btn-ghost btn-sm" title="View Event">&rarr;</a>` : ''}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            `;
+          });
+        });
+
+        fullHtml += '</div>';
+        container.innerHTML = fullHtml;
+
+      } catch (err) {
+        console.error('Failed to load activity:', err);
+        container.innerHTML = `
+          <div style="background:#fff;border-radius:var(--border-radius);padding:40px;text-align:center;">
+            ${emptyState('⚠️', 'Error Loading Activity', 'Unable to fetch your activity records. Please try again.')}
+          </div>
+        `;
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!auth.requireRole('student', '../student/login.html')) return;
+      auth.populateSidebarUser();
+      setActiveNavLink();
+      initSidebarToggle();
+      await loadActivityLog();
+    });
+  </script>
+</body>
+</html>

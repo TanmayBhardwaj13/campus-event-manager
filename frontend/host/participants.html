@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Participants - Host Portal - Campus Event Manager</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/utils.js"></script>
+  <style>
+    .event-summary-card {
+      background: #ffffff;
+      border-radius: var(--border-radius);
+      border: 1px solid var(--gray-200);
+      padding: 20px 24px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      flex-wrap: wrap;
+      box-shadow: var(--shadow-sm);
+    }
+    .bulk-bar {
+      position: sticky;
+      top: 72px;
+      z-index: 90;
+      background: #1e1b4b;
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: var(--border-radius);
+      margin-bottom: 16px;
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      box-shadow: var(--shadow-lg);
+      animation: slideDown 0.2s ease;
+    }
+    @keyframes slideDown {
+      from { transform: translateY(-10px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .att-toggle-group {
+      display: inline-flex;
+      background: var(--gray-100);
+      border-radius: 6px;
+      padding: 3px;
+      gap: 2px;
+    }
+    .att-btn {
+      border: none;
+      background: none;
+      padding: 4px 10px;
+      font-size: 0.76rem;
+      font-weight: 600;
+      border-radius: 4px;
+      cursor: pointer;
+      color: var(--gray-600);
+      transition: all 0.15s ease;
+    }
+    .att-btn:hover {
+      color: var(--gray-900);
+    }
+    .att-btn.active-present {
+      background: var(--success);
+      color: #fff;
+      box-shadow: var(--shadow-sm);
+    }
+    .att-btn.active-absent {
+      background: var(--danger);
+      color: #fff;
+      box-shadow: var(--shadow-sm);
+    }
+    .att-btn.active-not-marked {
+      background: var(--gray-300);
+      color: var(--gray-800);
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar-overlay"></div>
+
+  <div class="dashboard-layout">
+    <!-- HOST SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-icon">🎟️</div>
+        <div class="sidebar-brand-text">
+          <div class="brand-name">CampusEvents</div>
+          <div class="brand-role">Host Portal</div>
+        </div>
+      </div>
+      <ul class="sidebar-nav" style="padding:12px">
+        <li><a href="dashboard.html"><span class="nav-icon">🏠</span> Dashboard</a></li>
+        <li><a href="events.html"><span class="nav-icon">📅</span> My Events</a></li>
+        <li><a href="create-event.html"><span class="nav-icon">➕</span> Create Event</a></li>
+        <li><a href="analytics.html"><span class="nav-icon">📊</span> Analytics</a></li>
+        <li><a href="profile.html"><span class="nav-icon">👤</span> Profile</a></li>
+      </ul>
+      <div class="sidebar-footer">
+        <div class="sidebar-user" onclick="window.location.href='profile.html'">
+          <div class="sidebar-user-avatar" id="sidebar-user-avatar">H</div>
+          <div class="sidebar-user-info">
+            <div class="sidebar-user-name" id="sidebar-user-name">Host</div>
+            <div class="sidebar-user-role" id="sidebar-user-role">host</div>
+          </div>
+        </div>
+        <button class="btn btn-ghost w-full" style="color:#94a3b8;margin-top:8px" onclick="auth.logoutRole('host')">Logout</button>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+      <!-- TOPBAR -->
+      <header class="topbar">
+        <button class="topbar-menu-btn" id="sidebar-toggle" aria-label="Toggle navigation menu">☰</button>
+        <div>
+          <div class="topbar-title">Participants & Attendance</div>
+          <div class="topbar-subtitle" id="topbar-event-title">Event Roll Call</div>
+        </div>
+        <div class="topbar-actions">
+          <a href="#" id="back-detail-btn" class="btn btn-ghost btn-sm">← Event Details</a>
+        </div>
+      </header>
+
+      <!-- PAGE CONTENT -->
+      <div class="page-content">
+        <!-- EVENT HEADER SUMMARY -->
+        <div class="event-summary-card">
+          <div style="flex:1; min-width:280px;">
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+              <span class="badge badge-primary" id="event-cat-badge">Category</span>
+              <span id="event-status-badge"></span>
+            </div>
+            <h2 id="event-name-display" style="font-size:1.35rem; font-weight:800; color:var(--gray-900); margin-bottom:4px;">
+              Loading Event...
+            </h2>
+            <div id="event-schedule-info" style="font-size:0.85rem; color:var(--gray-500);">
+              Loading schedule...
+            </div>
+          </div>
+
+          <div style="width:260px;">
+            <div id="reg-progress-wrap"></div>
+          </div>
+
+          <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+            <button class="btn btn-outline" id="export-csv-btn">
+              <span>📥 Export CSV</span>
+            </button>
+            <button class="btn btn-primary" id="save-attendance-btn">
+              <span>💾 Save Attendance</span>
+            </button>
+            <button class="btn btn-success" id="issue-certs-btn" title="Issue participation certificates to attended students">
+              <span>🎓 Issue Certificates</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 4 STAT CARDS -->
+        <div class="stats-grid-4 stats-grid" style="margin-bottom:24px;">
+          <!-- Registered -->
+          <div class="stat-card blue">
+            <div class="stat-icon">👥</div>
+            <div class="stat-value" id="stat-registered">0</div>
+            <div class="stat-label">Total Registered</div>
+          </div>
+          <!-- Present -->
+          <div class="stat-card green">
+            <div class="stat-icon">✅</div>
+            <div class="stat-value" id="stat-present">0</div>
+            <div class="stat-label">Present</div>
+          </div>
+          <!-- Absent -->
+          <div class="stat-card red">
+            <div class="stat-icon">❌</div>
+            <div class="stat-value" id="stat-absent">0</div>
+            <div class="stat-label">Absent</div>
+          </div>
+          <!-- Not Marked -->
+          <div class="stat-card orange">
+            <div class="stat-icon">⏳</div>
+            <div class="stat-value" id="stat-not-marked">0</div>
+            <div class="stat-label">Not Marked</div>
+          </div>
+        </div>
+
+        <!-- BULK ACTIONS BAR (Visible when checkboxes are selected) -->
+        <div class="bulk-bar" id="bulk-bar">
+          <div style="display:flex; align-items:center; gap:12px;">
+            <span style="font-weight:700;" id="selected-count-text">0 selected</span>
+            <span style="opacity:0.6; font-size:0.85rem;">| Quick apply attendance to selected students</span>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button type="button" class="btn btn-success btn-sm" id="bulk-present-btn">Mark Selected Present</button>
+            <button type="button" class="btn btn-danger btn-sm" id="bulk-absent-btn">Mark Selected Absent</button>
+            <button type="button" class="btn btn-light btn-sm" id="bulk-certs-btn">Certificates for Selected</button>
+          </div>
+        </div>
+
+        <!-- PARTICIPANTS TABLE WRAPPER -->
+        <div class="table-wrapper">
+          <div class="table-header">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <h4 style="font-size:1rem; font-weight:700;">Participant Roster</h4>
+              <span class="badge badge-gray" id="roster-count-badge">0 Students</span>
+            </div>
+
+            <div class="table-controls">
+              <!-- Search -->
+              <div class="search-input-wrap">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="participant-search" class="search-input" placeholder="Search by name, ID, email...">
+              </div>
+              <!-- Attendance filter -->
+              <select id="attendance-filter" class="filter-select">
+                <option value="">All Attendance</option>
+                <option value="present">Present</option>
+                <option value="absent">Absent</option>
+                <option value="not-marked">Not Marked</option>
+              </select>
+              <!-- Registration status filter -->
+              <select id="reg-status-filter" class="filter-select">
+                <option value="">All Statuses</option>
+                <option value="registered">Registered</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width: 40px; text-align: center;">
+                    <input type="checkbox" id="select-all-checkbox" aria-label="Select all students">
+                  </th>
+                  <th>Student Details</th>
+                  <th>Student ID</th>
+                  <th>Department & Year</th>
+                  <th>Registration Date</th>
+                  <th>Status</th>
+                  <th style="min-width: 200px;">Attendance Status</th>
+                </tr>
+              </thead>
+              <tbody id="participants-tbody">
+                <tr>
+                  <td colspan="7" style="text-align:center; padding:40px; color:var(--gray-400);">
+                    Loading participant list...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    let eventId = null;
+    let eventData = null;
+    let registrations = [];
+    // Local tracking of attendance changes before saving
+    let localAttendance = {}; // { [registrationId]: 'present' | 'absent' | 'not-marked' }
+    let hasUnsavedChanges = false;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!auth.requireRole('host', '../host/login.html')) return;
+      auth.populateSidebarUser();
+      setActiveNavLink();
+      initSidebarToggle();
+
+      const params = new URLSearchParams(window.location.search);
+      eventId = params.get('id');
+
+      if (!eventId) {
+        toast.error('No event specified');
+        setTimeout(() => window.location.href = 'events.html', 1000);
+        return;
+      }
+
+      document.getElementById('back-detail-btn').href = `event-detail.html?id=${eventId}`;
+
+      setupListeners();
+      await loadParticipants();
+    });
+
+    async function loadParticipants() {
+      loader.show();
+      try {
+        const res = await api.host.getParticipants(eventId);
+        loader.hide();
+
+        if (res.success && res.data) {
+          eventData = res.data.event;
+          registrations = res.data.registrations || [];
+
+          // Initialize local attendance map
+          localAttendance = {};
+          registrations.forEach(r => {
+            localAttendance[r._id] = r.attendanceStatus || 'not-marked';
+          });
+          hasUnsavedChanges = false;
+
+          renderHeaderInfo();
+          updateStats();
+          renderParticipantsTable();
+        }
+      } catch (err) {
+        loader.hide();
+        toast.error('Failed to load participants: ' + err.message);
+      }
+    }
+
+    function renderHeaderInfo() {
+      if (!eventData) return;
+
+      document.getElementById('topbar-event-title').textContent = eventData.title;
+      document.getElementById('event-name-display').textContent = eventData.title;
+      document.getElementById('event-schedule-info').textContent =
+        `📅 ${fmt.date(eventData.date)} · ⏰ ${eventData.startTime || ''} - ${eventData.endTime || ''} · 📍 ${eventData.building || 'Campus'}, Room ${eventData.room || ''}`;
+
+      document.getElementById('event-cat-badge').textContent = eventData.categoryId?.name || 'General';
+      document.getElementById('event-status-badge').innerHTML = badge.eventStatus(eventData.eventStatus);
+
+      const max = eventData.maxParticipants || 100;
+      const current = eventData.currentRegistrations || registrations.length;
+      document.getElementById('reg-progress-wrap').innerHTML = progressBar(current, max);
+    }
+
+    function updateStats() {
+      const total = registrations.length;
+      let present = 0;
+      let absent = 0;
+      let notMarked = 0;
+
+      registrations.forEach(r => {
+        const status = localAttendance[r._id] || r.attendanceStatus || 'not-marked';
+        if (status === 'present') present++;
+        else if (status === 'absent') absent++;
+        else notMarked++;
+      });
+
+      document.getElementById('stat-registered').textContent = total;
+      document.getElementById('stat-present').textContent = present;
+      document.getElementById('stat-absent').textContent = absent;
+      document.getElementById('stat-not-marked').textContent = notMarked;
+      document.getElementById('roster-count-badge').textContent = `${total} Students`;
+    }
+
+    function setupListeners() {
+      // Search and Filter
+      document.getElementById('participant-search').addEventListener('input', renderParticipantsTable);
+      document.getElementById('attendance-filter').addEventListener('change', renderParticipantsTable);
+      document.getElementById('reg-status-filter').addEventListener('change', renderParticipantsTable);
+
+      // Select All Checkbox
+      const selectAll = document.getElementById('select-all-checkbox');
+      selectAll.addEventListener('change', function() {
+        const checkboxes = document.querySelectorAll('.row-select-checkbox');
+        checkboxes.forEach(cb => { cb.checked = this.checked; });
+        updateBulkBar();
+      });
+
+      // Bulk Actions
+      document.getElementById('bulk-present-btn').addEventListener('click', () => applyBulkAttendance('present'));
+      document.getElementById('bulk-absent-btn').addEventListener('click', () => applyBulkAttendance('absent'));
+      document.getElementById('bulk-certs-btn').addEventListener('click', issueBulkCertificates);
+
+      // Top Actions
+      document.getElementById('save-attendance-btn').addEventListener('click', saveAttendance);
+      document.getElementById('issue-certs-btn').addEventListener('click', issueCertificatesToPresent);
+      document.getElementById('export-csv-btn').addEventListener('click', exportCSV);
+    }
+
+    function getFilteredRegistrations() {
+      const search = document.getElementById('participant-search').value.trim().toLowerCase();
+      const attFilter = document.getElementById('attendance-filter').value;
+      const statusFilter = document.getElementById('reg-status-filter').value;
+
+      return registrations.filter(reg => {
+        const student = reg.studentId || {};
+        const profile = student.profile || {};
+        const currentAtt = localAttendance[reg._id] || reg.attendanceStatus || 'not-marked';
+
+        // Attendance filter
+        if (attFilter && currentAtt !== attFilter) return false;
+
+        // Registration status filter
+        if (statusFilter && reg.status !== statusFilter) return false;
+
+        // Search filter
+        if (search) {
+          const name = (student.name || '').toLowerCase();
+          const email = (student.email || '').toLowerCase();
+          const studentIdStr = (profile.studentId || '').toLowerCase();
+          const dept = (profile.departmentId?.name || '').toLowerCase();
+
+          if (!name.includes(search) && !email.includes(search) && !studentIdStr.includes(search) && !dept.includes(search)) {
+            return false;
+          }
+        }
+
+        return true;
+      });
+    }
+
+    function renderParticipantsTable() {
+      const filtered = getFilteredRegistrations();
+      const tbody = document.getElementById('participants-tbody');
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="7">
+              ${emptyState('👥', 'No Participants Found', 'No registrations match your search or filter criteria.')}
+            </td>
+          </tr>
+        `;
+        updateBulkBar();
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(reg => {
+        const student = reg.studentId || {};
+        const profile = student.profile || {};
+        const name = student.name || 'Student';
+        const email = student.email || '';
+        const studentIdVal = profile.studentId || 'N/A';
+        const deptName = profile.departmentId?.name || 'Department';
+        const yearVal = profile.year ? `Year ${profile.year}` : '';
+        const deptYear = [deptName, yearVal].filter(Boolean).join(' · ');
+        const initial = name[0]?.toUpperCase() || 'S';
+        const currentAtt = localAttendance[reg._id] || 'not-marked';
+
+        return `
+          <tr data-reg-id="${reg._id}" data-student-id="${student._id}">
+            <td style="text-align: center;">
+              <input type="checkbox" class="row-select-checkbox" value="${reg._id}" onchange="updateBulkBar()">
+            </td>
+            <td>
+              <div style="display:flex; align-items:center; gap:12px;">
+                <div style="width:34px; height:34px; border-radius:50%; background:linear-gradient(135deg, var(--primary), var(--accent)); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.8rem; flex-shrink:0;">
+                  ${initial}
+                </div>
+                <div>
+                  <div style="font-weight: 700; color: var(--gray-900); font-size: 0.9rem;">${name}</div>
+                  <div style="font-size: 0.76rem; color: var(--gray-500);">${email}</div>
+                </div>
+              </div>
+            </td>
+            <td>
+              <code style="background:var(--gray-100); padding:2px 6px; border-radius:4px; font-size:0.8rem; font-weight:600;">
+                ${studentIdVal}
+              </code>
+            </td>
+            <td>
+              <div style="font-size: 0.85rem; color: var(--gray-800);">${deptYear}</div>
+            </td>
+            <td>
+              <div style="font-size: 0.82rem; color: var(--gray-600);">${fmt.date(reg.registeredAt || reg.createdAt)}</div>
+            </td>
+            <td>${badge.registrationStatus(reg.status)}</td>
+            <td>
+              <div class="att-toggle-group">
+                <button type="button" class="att-btn ${currentAtt === 'present' ? 'active-present' : ''}" onclick="setAttendance('${reg._id}', 'present')">
+                  Present
+                </button>
+                <button type="button" class="att-btn ${currentAtt === 'absent' ? 'active-absent' : ''}" onclick="setAttendance('${reg._id}', 'absent')">
+                  Absent
+                </button>
+                <button type="button" class="att-btn ${currentAtt === 'not-marked' ? 'active-not-marked' : ''}" onclick="setAttendance('${reg._id}', 'not-marked')">
+                  Not Marked
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      updateBulkBar();
+    }
+
+    function setAttendance(regId, status) {
+      localAttendance[regId] = status;
+      hasUnsavedChanges = true;
+      updateStats();
+      renderParticipantsTable();
+    }
+
+    function updateBulkBar() {
+      const selected = document.querySelectorAll('.row-select-checkbox:checked');
+      const bar = document.getElementById('bulk-bar');
+      const text = document.getElementById('selected-count-text');
+
+      if (selected.length > 0) {
+        bar.style.display = 'flex';
+        text.textContent = `${selected.length} participant${selected.length > 1 ? 's' : ''} selected`;
+      } else {
+        bar.style.display = 'none';
+      }
+    }
+
+    function applyBulkAttendance(status) {
+      const selected = document.querySelectorAll('.row-select-checkbox:checked');
+      if (selected.length === 0) return;
+
+      selected.forEach(cb => {
+        localAttendance[cb.value] = status;
+      });
+      hasUnsavedChanges = true;
+      toast.info(`Marked ${selected.length} students as ${status}. Click 'Save Attendance' to persist.`);
+      updateStats();
+      renderParticipantsTable();
+    }
+
+    async function saveAttendance() {
+      const attendanceData = Object.entries(localAttendance).map(([registrationId, attendanceStatus]) => ({
+        registrationId,
+        attendanceStatus,
+      }));
+
+      loader.show();
+      try {
+        const res = await api.host.markAttendance(eventId, { attendanceData });
+        loader.hide();
+        hasUnsavedChanges = false;
+        toast.success(res.message || 'Attendance saved successfully!');
+        await loadParticipants();
+      } catch (err) {
+        loader.hide();
+        toast.error('Failed to save attendance: ' + err.message);
+      }
+    }
+
+    async function issueCertificatesToPresent() {
+      // Find all students marked present
+      const presentStudents = registrations.filter(r => {
+        const status = localAttendance[r._id] || r.attendanceStatus;
+        return status === 'present';
+      });
+
+      if (presentStudents.length === 0) {
+        toast.warning('No students are currently marked as "Present". Mark attendance first.');
+        return;
+      }
+
+      const ok = await modal.confirm({
+        title: 'Issue Certificates to Attendees?',
+        message: `Issue official digital certificates to all ${presentStudents.length} verified attendees for this event? Students will be notified instantly.`,
+        confirmText: 'Issue Certificates',
+        type: 'primary'
+      });
+      if (!ok) return;
+
+      // Ensure unsaved attendance is saved first
+      if (hasUnsavedChanges) {
+        await saveAttendance();
+      }
+
+      const studentIds = presentStudents.map(r => r.studentId?._id).filter(Boolean);
+
+      loader.show();
+      try {
+        const res = await api.host.markCertificates(eventId, { studentIds });
+        loader.hide();
+        toast.success(res.message || `Certificates issued to ${studentIds.length} students!`);
+      } catch (err) {
+        loader.hide();
+        toast.error('Failed to issue certificates: ' + err.message);
+      }
+    }
+
+    async function issueBulkCertificates() {
+      const selected = document.querySelectorAll('.row-select-checkbox:checked');
+      if (selected.length === 0) return;
+
+      const studentIds = [];
+      selected.forEach(cb => {
+        const row = cb.closest('tr');
+        const sId = row?.getAttribute('data-student-id');
+        if (sId) studentIds.push(sId);
+      });
+
+      const ok = await modal.confirm({
+        title: 'Issue Certificates to Selected?',
+        message: `Issue certificates to ${studentIds.length} selected students?`,
+        confirmText: 'Issue Certificates',
+        type: 'primary'
+      });
+      if (!ok) return;
+
+      loader.show();
+      try {
+        const res = await api.host.markCertificates(eventId, { studentIds });
+        loader.hide();
+        toast.success(res.message || 'Certificates issued successfully!');
+      } catch (err) {
+        loader.hide();
+        toast.error('Failed to issue certificates: ' + err.message);
+      }
+    }
+
+    function exportCSV() {
+      const headers = ['Name', 'StudentID', 'Email', 'Department', 'Year', 'Registration Date', 'Registration Status', 'Attendance'];
+      const rows = [headers];
+
+      registrations.forEach(r => {
+        const s = r.studentId || {};
+        const p = s.profile || {};
+        const currentAtt = localAttendance[r._id] || r.attendanceStatus || 'not-marked';
+
+        rows.push([
+          s.name || '',
+          p.studentId || '',
+          s.email || '',
+          p.departmentId?.name || '',
+          p.year || '',
+          fmt.date(r.registeredAt || r.createdAt),
+          r.status || 'registered',
+          currentAtt
+        ]);
+      });
+
+      const csvContent = rows.map(row =>
+        row.map(cell => `"${(cell || '').toString().replace(/"/g, '""')}"`).join(',')
+      ).join('\n');
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      const filename = `participants_${(eventData?.title || 'event').toLowerCase().replace(/[^a-z0-9]/g, '_')}.csv`;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success('Participant roster exported as CSV!');
+    }
+  </script>
+</body>
+</html>

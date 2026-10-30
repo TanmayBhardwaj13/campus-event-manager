@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Host Analytics - Campus Event Manager</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/utils.js"></script>
+</head>
+<body>
+  <div class="sidebar-overlay"></div>
+
+  <div class="dashboard-layout">
+    <!-- HOST SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-icon">🎟️</div>
+        <div class="sidebar-brand-text">
+          <div class="brand-name">CampusEvents</div>
+          <div class="brand-role">Host Portal</div>
+        </div>
+      </div>
+      <ul class="sidebar-nav" style="padding:12px">
+        <li><a href="dashboard.html"><span class="nav-icon">🏠</span> Dashboard</a></li>
+        <li><a href="events.html"><span class="nav-icon">📅</span> My Events</a></li>
+        <li><a href="create-event.html"><span class="nav-icon">➕</span> Create Event</a></li>
+        <li><a href="analytics.html"><span class="nav-icon">📊</span> Analytics</a></li>
+        <li><a href="profile.html"><span class="nav-icon">👤</span> Profile</a></li>
+      </ul>
+      <div class="sidebar-footer">
+        <div class="sidebar-user" onclick="window.location.href='profile.html'">
+          <div class="sidebar-user-avatar" id="sidebar-user-avatar">H</div>
+          <div class="sidebar-user-info">
+            <div class="sidebar-user-name" id="sidebar-user-name">Host</div>
+            <div class="sidebar-user-role" id="sidebar-user-role">host</div>
+          </div>
+        </div>
+        <button class="btn btn-ghost w-full" style="color:#94a3b8;margin-top:8px" onclick="auth.logoutRole('host')">Logout</button>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+      <!-- TOPBAR -->
+      <header class="topbar">
+        <button class="topbar-menu-btn" id="sidebar-toggle" aria-label="Toggle navigation menu">☰</button>
+        <div>
+          <div class="topbar-title">Organizer Analytics</div>
+          <div class="topbar-subtitle">In-depth turnout metrics, seat fill ratios, and event engagement</div>
+        </div>
+        <div class="topbar-actions">
+          <a href="events.html" class="btn btn-outline btn-sm">Manage Events</a>
+          <a href="create-event.html" class="btn btn-primary btn-sm">➕ Create Event</a>
+        </div>
+      </header>
+
+      <!-- PAGE CONTENT -->
+      <div class="page-content">
+        <!-- PAGE HEADER -->
+        <div class="page-header">
+          <div class="page-header-left">
+            <h2>Performance & Attendance Analytics</h2>
+            <p>Measure student demand, seat fill efficiency, and actual physical turnout across all your events.</p>
+          </div>
+        </div>
+
+        <!-- 4 STAT CARDS -->
+        <div class="stats-grid-4 stats-grid" style="margin-bottom:24px;">
+          <!-- Total Events -->
+          <div class="stat-card purple">
+            <div class="stat-icon">📅</div>
+            <div class="stat-value" id="stat-total-events">-</div>
+            <div class="stat-label">Total Events</div>
+          </div>
+          <!-- Total Registrations -->
+          <div class="stat-card blue">
+            <div class="stat-icon">👥</div>
+            <div class="stat-value" id="stat-registrations">-</div>
+            <div class="stat-label">Total Registrations</div>
+          </div>
+          <!-- Total Attendees -->
+          <div class="stat-card green">
+            <div class="stat-icon">🎓</div>
+            <div class="stat-value" id="stat-attendees">-</div>
+            <div class="stat-label">Total Attendees</div>
+          </div>
+          <!-- Avg Attendance Rate -->
+          <div class="stat-card teal">
+            <div class="stat-icon">📈</div>
+            <div class="stat-value" id="stat-rate">-</div>
+            <div class="stat-label">Avg. Attendance Rate</div>
+          </div>
+        </div>
+
+        <!-- 2 CHARTS IN SECTION GRID -->
+        <div class="section-grid-equal" style="margin-bottom: 24px;">
+          <!-- Chart 1: Event Performance (Grouped Bar Chart) -->
+          <div class="chart-card">
+            <div class="chart-card-header">
+              <div>
+                <div class="chart-card-title">Event Performance (Turnout)</div>
+                <div class="chart-card-subtitle">Registered sign-ups vs. verified present attendees</div>
+              </div>
+            </div>
+            <div class="chart-container" style="height: 300px;">
+              <canvas id="performanceChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Chart 2: Capacity Utilization (Horizontal Bar Chart) -->
+          <div class="chart-card">
+            <div class="chart-card-header">
+              <div>
+                <div class="chart-card-title">Capacity Utilization</div>
+                <div class="chart-card-subtitle">Percentage of total seat limit filled by registrations</div>
+              </div>
+            </div>
+            <div class="chart-container" style="height: 300px;">
+              <canvas id="capacityChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- EVENT PERFORMANCE TABLE -->
+        <div class="table-wrapper">
+          <div class="table-header">
+            <div>
+              <h4 style="font-size:1.05rem; font-weight:700;">Event Breakdown Table</h4>
+              <div style="font-size:0.8rem; color:var(--gray-500);">Comprehensive statistics per organized event</div>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th style="min-width: 200px;">Event Name</th>
+                  <th>Date</th>
+                  <th>Max Capacity</th>
+                  <th>Registered</th>
+                  <th>Attended</th>
+                  <th style="min-width: 140px;">Capacity %</th>
+                  <th style="min-width: 140px;">Attendance Rate</th>
+                </tr>
+              </thead>
+              <tbody id="analytics-tbody">
+                <tr>
+                  <td colspan="7" style="text-align:center; padding:36px; color:var(--gray-400);">
+                    Loading analytics breakdown...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    let perfChart = null;
+    let capChart = null;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!auth.requireRole('host', '../host/login.html')) return;
+      auth.populateSidebarUser();
+      setActiveNavLink();
+      initSidebarToggle();
+      await loadAnalyticsData();
+    });
+
+    async function loadAnalyticsData() {
+      loader.show();
+      try {
+        const [analyticsRes, dashRes] = await Promise.all([
+          api.host.getAnalytics(),
+          api.host.getDashboard().catch(() => null)
+        ]);
+        loader.hide();
+
+        if (analyticsRes.success && analyticsRes.data) {
+          const { totalRegistrations, totalAttendees, eventPerformance = [] } = analyticsRes.data;
+
+          const totalEvents = dashRes?.data?.stats?.total ?? eventPerformance.length;
+
+          // Compute average attendance rate
+          const rate = totalRegistrations > 0
+            ? Math.round((totalAttendees / totalRegistrations) * 100)
+            : 0;
+
+          document.getElementById('stat-total-events').textContent = totalEvents;
+          document.getElementById('stat-registrations').textContent = totalRegistrations;
+          document.getElementById('stat-attendees').textContent = totalAttendees;
+          document.getElementById('stat-rate').textContent = `${rate}%`;
+
+          renderPerformanceChart(eventPerformance);
+          renderCapacityChart(eventPerformance);
+          renderBreakdownTable(eventPerformance);
+        }
+      } catch (err) {
+        loader.hide();
+        toast.error('Failed to load analytics: ' + err.message);
+      }
+    }
+
+    function renderPerformanceChart(events) {
+      const ctx = document.getElementById('performanceChart').getContext('2d');
+      if (perfChart) perfChart.destroy();
+
+      if (!events || events.length === 0) {
+        perfChart = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: ['No Events Recorded'],
+            datasets: [
+              { label: 'Registered', data: [0], backgroundColor: '#4f46e5' },
+              { label: 'Attended', data: [0], backgroundColor: '#10b981' }
+            ]
+          },
+          options: { responsive: true, maintainAspectRatio: false }
+        });
+        return;
+      }
+
+      const labels = events.map(e => e.title.length > 16 ? e.title.slice(0, 14) + '...' : e.title);
+      const regData = events.map(e => e.registered || 0);
+      const attData = events.map(e => e.attended || 0);
+
+      perfChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'Registered',
+              data: regData,
+              backgroundColor: '#4f46e5',
+              borderRadius: 6,
+              maxBarThickness: 28,
+            },
+            {
+              label: 'Attended',
+              data: attData,
+              backgroundColor: '#10b981',
+              borderRadius: 6,
+              maxBarThickness: 28,
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: { boxWidth: 12, font: { family: 'Inter', size: 12 } }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: { precision: 0, font: { family: 'Inter' } },
+              grid: { color: '#f1f5f9' }
+            },
+            x: {
+              grid: { display: false },
+              ticks: { font: { family: 'Inter', size: 11 } }
+            }
+          }
+        }
+      });
+    }
+
+    function renderCapacityChart(events) {
+      const ctx = document.getElementById('capacityChart').getContext('2d');
+      if (capChart) capChart.destroy();
+
+      if (!events || events.length === 0) {
+        capChart = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: ['No Events'],
+            datasets: [{ label: '% Filled', data: [0], backgroundColor: '#8b5cf6' }]
+          },
+          options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false }
+        });
+        return;
+      }
+
+      const labels = events.map(e => e.title.length > 20 ? e.title.slice(0, 18) + '...' : e.title);
+      const pcts = events.map(e => {
+        const cap = e.capacity || 100;
+        const reg = e.registered || 0;
+        return cap > 0 ? Math.min(100, Math.round((reg / cap) * 100)) : 0;
+      });
+
+      capChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Capacity Filled (%)',
+            data: pcts,
+            backgroundColor: pcts.map(p => p >= 90 ? '#ef4444' : p >= 70 ? '#f59e0b' : '#6366f1'),
+            borderRadius: 6,
+            maxBarThickness: 22,
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return ` ${context.parsed.x}% seats filled`;
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              beginAtZero: true,
+              max: 100,
+              ticks: {
+                callback: v => `${v}%`,
+                font: { family: 'Inter' }
+              },
+              grid: { color: '#f1f5f9' }
+            },
+            y: {
+              grid: { display: false },
+              ticks: { font: { family: 'Inter', size: 11 } }
+            }
+          }
+        }
+      });
+    }
+
+    function renderBreakdownTable(events) {
+      const tbody = document.getElementById('analytics-tbody');
+      if (!events || events.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="7">
+              ${emptyState('📊', 'No Performance Data Yet', 'Host events and collect registrations to view detailed attendance conversion rates.')}
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = events.map(ev => {
+        const reg = ev.registered || 0;
+        const att = ev.attended || 0;
+        const cap = ev.capacity || 100;
+        const capPct = cap > 0 ? Math.min(100, Math.round((reg / cap) * 100)) : 0;
+        const attRate = reg > 0 ? Math.round((att / reg) * 100) : 0;
+
+        return `
+          <tr>
+            <td>
+              <div style="font-weight: 700; color: var(--gray-900); font-size: 0.9rem;">
+                ${ev.title}
+              </div>
+            </td>
+            <td>
+              <div style="font-size: 0.85rem; color: var(--gray-600);">${fmt.shortDate(ev.date)}</div>
+            </td>
+            <td>
+              <div style="font-weight: 600;">${cap} seats</div>
+            </td>
+            <td>
+              <div style="font-weight: 600; color: var(--primary);">${reg}</div>
+            </td>
+            <td>
+              <div style="font-weight: 600; color: var(--success);">${att}</div>
+            </td>
+            <td>
+              <div style="display:flex; align-items:center; gap:8px;">
+                <div class="progress-bar" style="flex:1; height:6px;">
+                  <div class="progress-fill ${capPct >= 90 ? 'danger' : capPct >= 70 ? '' : 'success'}" style="width:${capPct}%;"></div>
+                </div>
+                <span style="font-size:0.8rem; font-weight:700; min-width:36px; text-align:right;">${capPct}%</span>
+              </div>
+            </td>
+            <td>
+              <span class="badge ${attRate >= 75 ? 'badge-success' : attRate >= 50 ? 'badge-warning' : 'badge-gray'}">
+                ${attRate}% Turnout
+              </span>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+  </script>
+</body>
+</html>

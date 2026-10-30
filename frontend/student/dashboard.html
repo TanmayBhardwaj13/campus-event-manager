@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Dashboard | Campus Event Manager</title>
+  <meta name="description" content="Manage your campus events, registrations, schedule, and view recommended events.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/utils.js"></script>
+  <style>
+    .welcome-banner {
+      background: linear-gradient(135deg, #312e81 0%, #4f46e5 50%, #06b6d4 100%);
+      color: #fff;
+      border-radius: var(--border-radius-lg);
+      padding: 28px 32px;
+      margin-bottom: 24px;
+      box-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.35);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+    .welcome-banner::after {
+      content: '🎓';
+      position: absolute;
+      right: 20px;
+      bottom: -15px;
+      font-size: 8rem;
+      opacity: 0.12;
+      pointer-events: none;
+    }
+    .welcome-title {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: #ffffff;
+      margin-bottom: 6px;
+    }
+    .welcome-meta {
+      font-size: 0.9rem;
+      color: #e0e7ff;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .welcome-meta span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .welcome-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      position: relative;
+      z-index: 2;
+    }
+    .upcoming-scroll-container {
+      display: flex;
+      gap: 18px;
+      overflow-x: auto;
+      padding: 4px 4px 16px 4px;
+      scroll-snap-type: x mandatory;
+    }
+    .upcoming-scroll-container::-webkit-scrollbar {
+      height: 6px;
+    }
+    .upcoming-scroll-container .event-card {
+      min-width: 300px;
+      max-width: 320px;
+      flex-shrink: 0;
+      scroll-snap-align: start;
+    }
+    .section-title-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .section-title-wrap h3 {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--gray-900);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .grid-3-col {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+    @media (max-width: 1024px) {
+      .grid-3-col {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    @media (max-width: 640px) {
+      .grid-3-col {
+        grid-template-columns: 1fr;
+      }
+      .welcome-banner {
+        padding: 22px 20px;
+      }
+      .welcome-title {
+        font-size: 1.35rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="sidebar-overlay"></div>
+
+  <div class="dashboard-layout">
+    <!-- STUDENT SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-icon">🎓</div>
+        <div class="sidebar-brand-text">
+          <div class="brand-name">CampusEvents</div>
+          <div class="brand-role">Student Portal</div>
+        </div>
+      </div>
+      <ul class="sidebar-nav" style="padding:12px">
+        <li><a href="dashboard.html"><span class="nav-icon">🏠</span> Dashboard</a></li>
+        <li><a href="events.html"><span class="nav-icon">🔍</span> Discover Events</a></li>
+        <li><a href="my-events.html"><span class="nav-icon">📅</span> My Events</a></li>
+        <li><a href="saved.html"><span class="nav-icon">📌</span> Saved Events</a></li>
+        <li><a href="activity.html"><span class="nav-icon">⏱️</span> Activity</a></li>
+        <li><a href="certificates.html"><span class="nav-icon">🎓</span> Certificates</a></li>
+        <li><a href="notifications.html"><span class="nav-icon">🔔</span> Notifications <span class="nav-badge" id="notif-count" style="display:none">0</span></a></li>
+        <li><a href="profile.html"><span class="nav-icon">👤</span> Profile</a></li>
+      </ul>
+      <div class="sidebar-footer">
+        <div class="sidebar-user">
+          <div class="sidebar-user-avatar" id="sidebar-user-avatar">S</div>
+          <div class="sidebar-user-info">
+            <div class="sidebar-user-name" id="sidebar-user-name">Student</div>
+            <div class="sidebar-user-role" id="sidebar-user-role">student</div>
+          </div>
+        </div>
+        <button class="btn btn-ghost w-full" style="color:#94a3b8;margin-top:8px" onclick="auth.logoutRole('student')">Logout</button>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+      <!-- TOPBAR -->
+      <header class="topbar">
+        <button class="topbar-menu-btn" id="sidebar-toggle" aria-label="Toggle navigation">☰</button>
+        <div>
+          <div class="topbar-title">Student Dashboard</div>
+          <div class="topbar-subtitle">Overview & Active Registrations</div>
+        </div>
+        <div class="topbar-actions">
+          <a href="events.html" class="btn btn-primary btn-sm">
+            <span>🔍</span> Explore Events
+          </a>
+          <a href="notifications.html" class="topbar-icon-btn notif-bell" title="Notifications">
+            🔔
+            <span class="notif-badge" id="topbar-notif-badge" style="display:none">0</span>
+          </a>
+          <a href="profile.html" class="topbar-icon-btn" title="My Profile">👤</a>
+        </div>
+      </header>
+
+      <!-- PAGE CONTENT -->
+      <div class="page-content">
+
+        <!-- Welcome Banner -->
+        <div class="welcome-banner">
+          <div>
+            <div class="welcome-title">Welcome back, <span id="welcome-name">Student</span>! 👋</div>
+            <div class="welcome-meta">
+              <span id="current-date">📅 Loading date...</span>
+              <span id="current-time">⏰ Loading time...</span>
+              <span>📍 Campus Campus Center</span>
+            </div>
+          </div>
+          <div class="welcome-actions">
+            <a href="events.html" class="btn btn-light btn-sm" style="font-weight:700">
+              Browse Events &rarr;
+            </a>
+            <a href="my-events.html" class="btn btn-outline btn-sm" style="color:#fff;border-color:rgba(255,255,255,0.6)">
+              My Schedule
+            </a>
+          </div>
+        </div>
+
+        <!-- 4 Stats Cards Grid -->
+        <div class="stats-grid stats-grid-4">
+          <div class="stat-card indigo">
+            <div class="stat-icon">📅</div>
+            <div class="stat-value" id="stat-registered">0</div>
+            <div class="stat-label">Events Registered</div>
+          </div>
+          <div class="stat-card green">
+            <div class="stat-icon">🎯</div>
+            <div class="stat-value" id="stat-attended">0</div>
+            <div class="stat-label">Events Attended</div>
+          </div>
+          <div class="stat-card orange">
+            <div class="stat-icon">⏰</div>
+            <div class="stat-value" id="stat-upcoming">0</div>
+            <div class="stat-label">Upcoming Events</div>
+          </div>
+          <div class="stat-card purple">
+            <div class="stat-icon">🎓</div>
+            <div class="stat-value" id="stat-certificates">0</div>
+            <div class="stat-label">Certificates Earned</div>
+          </div>
+        </div>
+
+        <!-- Section: Your Upcoming Events -->
+        <div style="margin-bottom: 32px;">
+          <div class="section-title-wrap">
+            <h3><span>⏰</span> Your Upcoming Events</h3>
+            <a href="my-events.html" class="text-primary font-semibold text-sm">View All My Events &rarr;</a>
+          </div>
+          <div id="upcoming-events-container" class="upcoming-scroll-container">
+            <div class="skeleton" style="height:260px;min-width:300px;border-radius:var(--border-radius);"></div>
+            <div class="skeleton" style="height:260px;min-width:300px;border-radius:var(--border-radius);"></div>
+          </div>
+        </div>
+
+        <!-- Section 2-Column: Recommended Events & Recent Activity -->
+        <div class="section-grid">
+          <!-- Left Column: Recommended Events -->
+          <div>
+            <div class="section-title-wrap">
+              <h3><span>🔥</span> Recommended for You</h3>
+              <a href="events.html" class="text-primary font-semibold text-sm">Discover More &rarr;</a>
+            </div>
+            <div id="recommended-events-grid" class="grid-3-col" style="grid-template-columns:repeat(auto-fill, minmax(260px, 1fr));">
+              <div class="skeleton" style="height:320px;border-radius:var(--border-radius);"></div>
+              <div class="skeleton" style="height:320px;border-radius:var(--border-radius);"></div>
+            </div>
+          </div>
+
+          <!-- Right Column: Recent Activity -->
+          <div>
+            <div class="section-title-wrap">
+              <h3><span>⏱️</span> Recent Activity</h3>
+              <a href="activity.html" class="text-primary font-semibold text-sm">Full History &rarr;</a>
+            </div>
+            <div class="card">
+              <div class="card-body" id="recent-activity-container" style="padding:18px;">
+                <div class="skeleton" style="height:40px;margin-bottom:12px;border-radius:6px;"></div>
+                <div class="skeleton" style="height:40px;margin-bottom:12px;border-radius:6px;"></div>
+                <div class="skeleton" style="height:40px;border-radius:6px;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Event card renderer for Recommended & General
+    function renderEventCard(event, isRegistered = false) {
+      const imgHtml = event.image 
+        ? `<img src="${imgUrl(event.image)}" alt="${event.title}" onerror="this.parentElement.style.background='linear-gradient(135deg,#eef2ff,#e0f2fe)'; this.style.display='none';">`
+        : '';
+      const catStyle = event.categoryId?.color ? `background:${event.categoryId.color}20;color:${event.categoryId.color}` : '';
+      const seatsLeft = Math.max(0, (event.maxParticipants || 0) - (event.currentRegistrations || 0));
+      const isFull = event.maxParticipants > 0 && event.currentRegistrations >= event.maxParticipants;
+
+      return `
+        <div class="event-card">
+          <div class="event-card-image" style="${!event.image ? 'background:linear-gradient(135deg,#eef2ff,#f0f9ff)' : ''}">
+            ${imgHtml}
+            <div class="event-date-badge">${fmt.shortDate(event.date)}</div>
+          </div>
+          <div class="event-card-body">
+            <div class="event-card-category"><span class="badge" style="${catStyle}">${event.categoryId?.name || 'Event'}</span></div>
+            <div class="event-card-title">${event.title}</div>
+            <div class="event-card-meta">
+              <span>📅 ${fmt.date(event.date)} &bull; ${event.startTime || ''} ${event.endTime ? '- ' + event.endTime : ''}</span>
+              <span>📍 ${event.building || 'Campus'} ${event.room ? '- ' + event.room : ''}</span>
+              <span>👥 ${event.departmentId?.name || event.clubId?.name || 'College Event'}</span>
+            </div>
+            <div style="margin-bottom:8px">${progressBar(event.currentRegistrations || 0, event.maxParticipants || 0)}</div>
+          </div>
+          <div class="event-card-footer">
+            <span class="text-sm text-muted">${seatsLeft} seats left</span>
+            <div style="display:flex;gap:6px;">
+              ${isRegistered 
+                ? `<span class="badge badge-success">Registered ✓</span>` 
+                : `<button class="btn ${isFull ? 'btn-warning' : 'btn-primary'} btn-sm" onclick="handleDashboardRegister('${event._id}')">${isFull ? 'Waitlist' : 'Register'}</button>`
+              }
+              <a href="../events/detail.html?id=${event._id}" class="btn btn-ghost btn-sm" title="View details">&rarr;</a>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Custom card renderer for Upcoming registered events with Cancel button
+    function renderUpcomingCard(reg) {
+      const event = reg.eventId;
+      if (!event) return '';
+      const imgHtml = event.image 
+        ? `<img src="${imgUrl(event.image)}" alt="${event.title}" onerror="this.parentElement.style.background='linear-gradient(135deg,#eef2ff,#e0f2fe)'; this.style.display='none';">`
+        : '';
+      const catStyle = event.categoryId?.color ? `background:${event.categoryId.color}20;color:${event.categoryId.color}` : '';
+      const timeLeft = fmt.timeLeft(event.date);
+
+      return `
+        <div class="event-card">
+          <div class="event-card-image" style="${!event.image ? 'background:linear-gradient(135deg,#eef2ff,#f0f9ff)' : ''}">
+            ${imgHtml}
+            <div class="event-date-badge">${fmt.shortDate(event.date)}</div>
+            <div style="position:absolute;bottom:10px;left:10px;">
+              <span class="badge badge-success" style="backdrop-filter:blur(6px);box-shadow:0 2px 8px rgba(0,0,0,0.2)">${timeLeft || 'Upcoming'}</span>
+            </div>
+          </div>
+          <div class="event-card-body">
+            <div class="event-card-category"><span class="badge" style="${catStyle}">${event.categoryId?.name || 'Event'}</span></div>
+            <div class="event-card-title">${event.title}</div>
+            <div class="event-card-meta">
+              <span>📅 ${fmt.date(event.date)} &bull; ${event.startTime || ''} ${event.endTime ? '- ' + event.endTime : ''}</span>
+              <span>📍 ${event.building || 'Campus'} ${event.room ? '- ' + event.room : ''}</span>
+            </div>
+          </div>
+          <div class="event-card-footer">
+            <button class="btn btn-outline-danger btn-sm" onclick="handleDashboardCancel('${event._id}', '${event.title.replace(/'/g, "\\'")}')">Cancel</button>
+            <a href="../events/detail.html?id=${event._id}" class="btn btn-primary btn-sm">Details</a>
+          </div>
+        </div>
+      `;
+    }
+
+    // Action handlers for dashboard
+    async function handleDashboardRegister(eventId) {
+      loader.show();
+      try {
+        const res = await api.student.registerForEvent(eventId);
+        toast.success(res.message || 'Registration successful!');
+        await loadPageData();
+      } catch (err) {
+        toast.error(err.message || 'Failed to register for event.');
+      } finally {
+        loader.hide();
+      }
+    }
+
+    async function handleDashboardCancel(eventId, eventTitle) {
+      const confirmed = await modal.confirm({
+        title: 'Cancel Registration?',
+        message: `Are you sure you want to cancel your seat for "${eventTitle}"? If this event has a waitlist, your seat will be transferred.`,
+        confirmText: 'Yes, Cancel Seat',
+        cancelText: 'Keep My Seat',
+        type: 'danger'
+      });
+
+      if (!confirmed) return;
+
+      loader.show();
+      try {
+        const res = await api.student.cancelRegistration(eventId);
+        toast.success(res.message || 'Registration cancelled.');
+        await loadPageData();
+      } catch (err) {
+        toast.error(err.message || 'Failed to cancel registration.');
+      } finally {
+        loader.hide();
+      }
+    }
+
+    function updateLiveClock() {
+      const now = new Date();
+      const dateEl = document.getElementById('current-date');
+      const timeEl = document.getElementById('current-time');
+      if (dateEl) {
+        dateEl.innerHTML = `📅 ${now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}`;
+      }
+      if (timeEl) {
+        timeEl.innerHTML = `⏰ ${now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`;
+      }
+    }
+
+    async function loadPageData() {
+      try {
+        // Fetch dashboard data
+        const res = await api.student.getDashboard();
+        const data = res.data || {};
+        const stats = data.stats || {};
+
+        // Also fetch certificates for stat card
+        let certCount = 0;
+        try {
+          const certRes = await api.student.getCertificates();
+          certCount = certRes.data ? certRes.data.length : 0;
+        } catch (e) {
+          console.warn('Could not fetch certificates count:', e);
+        }
+
+        // Update stats
+        document.getElementById('stat-registered').textContent = stats.registered || 0;
+        document.getElementById('stat-attended').textContent = stats.attended || 0;
+        document.getElementById('stat-upcoming').textContent = data.upcomingRegistrations ? data.upcomingRegistrations.length : 0;
+        document.getElementById('stat-certificates').textContent = certCount;
+
+        // Update notification badges
+        const unreadCount = data.unreadNotifications || 0;
+        const sideNotif = document.getElementById('notif-count');
+        const topNotif = document.getElementById('topbar-notif-badge');
+        if (sideNotif) {
+          if (unreadCount > 0) {
+            sideNotif.textContent = unreadCount;
+            sideNotif.style.display = 'inline-block';
+          } else {
+            sideNotif.style.display = 'none';
+          }
+        }
+        if (topNotif) {
+          if (unreadCount > 0) {
+            topNotif.textContent = unreadCount;
+            topNotif.style.display = 'flex';
+          } else {
+            topNotif.style.display = 'none';
+          }
+        }
+
+        // Render Upcoming Events
+        const upcomingContainer = document.getElementById('upcoming-events-container');
+        if (data.upcomingRegistrations && data.upcomingRegistrations.length > 0) {
+          upcomingContainer.innerHTML = data.upcomingRegistrations
+            .map(reg => renderUpcomingCard(reg))
+            .join('');
+        } else {
+          upcomingContainer.innerHTML = `
+            <div style="width:100%;background:#fff;border-radius:var(--border-radius);border:1px dashed var(--gray-300);padding:32px 20px;text-align:center;">
+              ${emptyState('📅', 'No Upcoming Events', 'You have no active event registrations right now.', '<a href="events.html" class="btn btn-primary btn-sm">Discover Events</a>')}
+            </div>
+          `;
+        }
+
+        // Render Recommended Events
+        const recContainer = document.getElementById('recommended-events-grid');
+        if (data.recommendedEvents && data.recommendedEvents.length > 0) {
+          recContainer.innerHTML = data.recommendedEvents
+            .map(evt => renderEventCard(evt, false))
+            .join('');
+        } else {
+          recContainer.innerHTML = `
+            <div style="grid-column: 1 / -1; background:#fff;border-radius:var(--border-radius);border:1px dashed var(--gray-300);padding:32px 20px;text-align:center;">
+              ${emptyState('🎉', 'No Recommended Events', 'Check back later for new events posted by clubs and departments.')}
+            </div>
+          `;
+        }
+
+        // Render Recent Activity (using api.student.getActivity())
+        const activityContainer = document.getElementById('recent-activity-container');
+        try {
+          const actRes = await api.student.getActivity();
+          const activities = (actRes.data || []).slice(0, 5);
+
+          if (activities.length > 0) {
+            let actHtml = '<div class="timeline">';
+            activities.forEach(item => {
+              const eventTitle = item.eventId?.title || 'Campus Event';
+              let dotColor = '#10b981';
+              let dotIcon = '✅';
+              let actionTitle = 'Registered for event';
+
+              if (item.status === 'cancelled') {
+                dotColor = '#ef4444';
+                dotIcon = '❌';
+                actionTitle = 'Cancelled registration';
+              } else if (item.status === 'waitlisted') {
+                dotColor = '#f59e0b';
+                dotIcon = '⌛';
+                actionTitle = 'Added to waitlist';
+              } else if (item.attendanceStatus === 'present') {
+                dotColor = '#3b82f6';
+                dotIcon = '🎯';
+                actionTitle = 'Attended event';
+              }
+
+              actHtml += `
+                <div class="timeline-item">
+                  <div class="timeline-line">
+                    <div class="timeline-dot" style="background:${dotColor}15;color:${dotColor};border:1.5px solid ${dotColor}">
+                      ${dotIcon}
+                    </div>
+                    <div class="timeline-connector"></div>
+                  </div>
+                  <div class="timeline-content">
+                    <div class="timeline-title">${actionTitle}</div>
+                    <div class="timeline-subtitle"><strong>${eventTitle}</strong> &bull; ${fmt.relativeTime(item.updatedAt || item.registeredAt)}</div>
+                  </div>
+                </div>
+              `;
+            });
+            actHtml += '</div>';
+            activityContainer.innerHTML = actHtml;
+          } else {
+            activityContainer.innerHTML = emptyState('⏱️', 'No Recent Activity', 'Your event registrations and actions will appear here.');
+          }
+        } catch (actErr) {
+          console.warn('Could not load activity:', actErr);
+          activityContainer.innerHTML = emptyState('⏱️', 'No Activity Recorded', 'Explore events to get started!');
+        }
+
+      } catch (err) {
+        console.error('Failed to load dashboard:', err);
+        toast.error('Unable to load dashboard data. Check backend connection.');
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!auth.requireRole('student', '../student/login.html')) return;
+      auth.populateSidebarUser();
+      setActiveNavLink();
+      initSidebarToggle();
+
+      const user = auth.getUser();
+      if (user && user.name) {
+        const welcomeEl = document.getElementById('welcome-name');
+        if (welcomeEl) welcomeEl.textContent = user.name;
+      }
+
+      updateLiveClock();
+      setInterval(updateLiveClock, 30000);
+
+      await loadPageData();
+    });
+  </script>
+</body>
+</html>

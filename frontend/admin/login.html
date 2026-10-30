@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Portal Login - Campus Event Manager</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  <style>
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%);
+      padding: 20px;
+      position: relative;
+      overflow-x: hidden;
+    }
+    body::before {
+      content: '';
+      position: absolute;
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.25) 0%, rgba(99, 102, 241, 0) 70%);
+      top: -100px;
+      right: -100px;
+      border-radius: 50%;
+      pointer-events: none;
+    }
+    body::after {
+      content: '';
+      position: absolute;
+      width: 450px;
+      height: 450px;
+      background: radial-gradient(circle, rgba(236, 72, 153, 0.18) 0%, rgba(236, 72, 153, 0) 70%);
+      bottom: -100px;
+      left: -100px;
+      border-radius: 50%;
+      pointer-events: none;
+    }
+    .login-container {
+      width: 100%;
+      max-width: 430px;
+      z-index: 1;
+      animation: slideUp 0.4s ease;
+    }
+    .login-card {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 36px 32px;
+      box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+    .login-header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    .brand-icon-lg {
+      width: 56px;
+      height: 56px;
+      background: linear-gradient(135deg, var(--primary), #8b5cf6);
+      border-radius: 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      margin-bottom: 12px;
+      box-shadow: 0 8px 16px rgba(79, 70, 229, 0.35);
+    }
+    .login-title {
+      font-size: 1.45rem;
+      font-weight: 800;
+      color: var(--gray-900);
+      margin-bottom: 4px;
+    }
+    .login-subtitle {
+      font-size: 0.875rem;
+      color: var(--gray-500);
+    }
+    .admin-badge-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #eef2ff;
+      color: #4f46e5;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-top: 8px;
+    }
+    .password-wrapper {
+      position: relative;
+    }
+    .password-toggle {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--gray-400);
+      font-size: 1rem;
+      padding: 4px;
+    }
+    .password-toggle:hover {
+      color: var(--gray-700);
+    }
+    .demo-hint {
+      margin-top: 20px;
+      padding: 12px;
+      background: var(--gray-50);
+      border-radius: 8px;
+      border: 1px dashed var(--gray-300);
+      font-size: 0.78rem;
+      color: var(--gray-600);
+    }
+    .login-back-link {
+      text-align: center;
+      margin-top: 20px;
+    }
+    .login-back-link a {
+      color: #cbd5e1;
+      font-size: 0.85rem;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .login-back-link a:hover {
+      color: #ffffff;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="login-container">
+    <div class="login-card">
+      <div class="login-header">
+        <div class="brand-icon-lg">🎓</div>
+        <h1 class="login-title">CampusEvents</h1>
+        <div class="login-subtitle">Central Management Portal</div>
+        <div class="admin-badge-pill">
+          <span>🔒</span> Admin Access Only
+        </div>
+      </div>
+
+      <div id="error-alert" class="alert alert-danger" style="display:none;margin-bottom:18px;">
+        <span class="alert-icon">⚠️</span>
+        <div class="alert-content">
+          <p id="error-text" style="margin:0;"></p>
+        </div>
+      </div>
+
+      <form id="login-form">
+        <div class="form-group">
+          <label class="form-label" for="email">Admin Email <span class="required">*</span></label>
+          <input
+            type="email"
+            id="email"
+            class="form-control"
+            placeholder="admin@campus.edu"
+            required
+            autocomplete="email"
+          >
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="password">Password <span class="required">*</span></label>
+          <div class="password-wrapper">
+            <input
+              type="password"
+              id="password"
+              class="form-control"
+              placeholder="••••••••••••"
+              required
+              autocomplete="current-password"
+            >
+            <button
+              type="button"
+              class="password-toggle"
+              onclick="togglePasswordVisibility()"
+              title="Show/Hide Password"
+              aria-label="Toggle password view"
+            >👁️</button>
+          </div>
+        </div>
+
+        <button type="submit" id="login-btn" class="btn btn-primary w-full btn-lg" style="margin-top:8px;">
+          Login as Admin
+        </button>
+      </form>
+
+      <div class="demo-hint">
+        <div style="font-weight:600;margin-bottom:2px;color:var(--gray-700);">💡 Administrator Credentials:</div>
+        <div>Default Email: <code>admin@campus.edu</code></div>
+        <div>Password: <code>admin123</code></div>
+      </div>
+    </div>
+
+    <div class="login-back-link">
+      <a href="../index.html">← Back to Campus Events Public Site</a>
+    </div>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/utils.js"></script>
+  <script>
+    function togglePasswordVisibility() {
+      const pwd = document.getElementById('password');
+      if (pwd.type === 'password') {
+        pwd.type = 'text';
+      } else {
+        pwd.type = 'password';
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // Check existing admin session
+      if (auth.isLoggedIn() && auth.getRole() === 'admin') {
+        window.location.href = 'dashboard.html';
+        return;
+      }
+
+      const form = document.getElementById('login-form');
+      const btn = document.getElementById('login-btn');
+      const errorAlert = document.getElementById('error-alert');
+      const errorText = document.getElementById('error-text');
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        errorAlert.style.display = 'none';
+        btn.disabled = true;
+        btn.textContent = 'Logging in...';
+
+        try {
+          const data = await api.auth.loginAdmin({
+            email: document.getElementById('email').value.trim(),
+            password: document.getElementById('password').value
+          });
+
+          auth.setSession(data.token, data.user);
+          toast.success('Welcome back, Admin!');
+          setTimeout(() => {
+            window.location.href = 'dashboard.html';
+          }, 500);
+        } catch (err) {
+          const msg = err.message || 'Login failed. Please check credentials.';
+          toast.error(msg);
+          errorText.textContent = msg;
+          errorAlert.style.display = 'flex';
+          btn.disabled = false;
+          btn.textContent = 'Login as Admin';
+        }
+      });
+    });
+  </script>
+</body>
+</html>

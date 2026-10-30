@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Event Categories - Admin Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  <style>
+    .category-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+    }
+    @media (max-width: 1024px) {
+      .category-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 640px) {
+      .category-grid { grid-template-columns: 1fr; }
+    }
+    .cat-card {
+      background: #fff;
+      border-radius: var(--border-radius);
+      border: 1px solid var(--gray-200);
+      padding: 24px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      transition: all 0.25s ease;
+      position: relative;
+    }
+    .cat-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-md);
+    }
+    .cat-color-disc {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      margin-bottom: 14px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      position: relative;
+    }
+    .cat-name {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--gray-900);
+      margin-bottom: 4px;
+    }
+    .cat-slug {
+      font-size: 0.75rem;
+      color: var(--gray-400);
+      font-family: monospace;
+      margin-bottom: 12px;
+    }
+    .color-picker-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .color-preview-box {
+      width: 44px;
+      height: 44px;
+      border-radius: 8px;
+      border: 1px solid var(--gray-300);
+      cursor: pointer;
+    }
+    .emoji-presets {
+      display: flex;
+      gap: 8px;
+      margin-top: 6px;
+      flex-wrap: wrap;
+    }
+    .emoji-preset-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 6px;
+      border: 1px solid var(--gray-200);
+      background: #fff;
+      font-size: 1.1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+    .emoji-preset-btn:hover {
+      border-color: var(--primary);
+      background: var(--primary-bg);
+      transform: scale(1.1);
+    }
+  </style>
+</head>
+<body>
+
+<div class="dashboard-layout">
+  <div class="sidebar-overlay" onclick="document.querySelector('.sidebar').classList.remove('open');this.classList.remove('visible')"></div>
+  
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-icon">🎓</div>
+      <div class="sidebar-brand-text">
+        <div class="brand-name">CampusEvents</div>
+        <div class="brand-role">Admin Portal</div>
+      </div>
+    </div>
+    
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Main</div>
+      <ul class="sidebar-nav">
+        <li><a href="dashboard.html"><span class="nav-icon">🏠</span> Dashboard</a></li>
+        <li><a href="events.html"><span class="nav-icon">📅</span> Events</a></li>
+        <li><a href="students.html"><span class="nav-icon">👥</span> Students</a></li>
+        <li><a href="hosts.html"><span class="nav-icon">👔</span> Hosts</a></li>
+        <li><a href="departments.html"><span class="nav-icon">🏛️</span> Departments</a></li>
+        <li><a href="clubs.html"><span class="nav-icon">🎯</span> Clubs</a></li>
+        <li><a href="categories.html"><span class="nav-icon">🏷️</span> Categories</a></li>
+        <li><a href="analytics.html"><span class="nav-icon">📊</span> Analytics</a></li>
+      </ul>
+    </div>
+    
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">System</div>
+      <ul class="sidebar-nav">
+        <li><a href="settings.html"><span class="nav-icon">⚙️</span> Settings</a></li>
+      </ul>
+    </div>
+    
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="sidebar-user-avatar" id="sidebar-user-avatar">A</div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name" id="sidebar-user-name">Admin</div>
+          <div class="sidebar-user-role" id="sidebar-user-role">admin</div>
+        </div>
+      </div>
+      <button class="btn btn-ghost w-full" style="color:#94a3b8;margin-top:8px" onclick="auth.logoutRole('admin')">Logout</button>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <div class="main-content">
+    <header class="topbar">
+      <button class="topbar-menu-btn" id="sidebar-toggle">☰</button>
+      <div>
+        <div class="topbar-title">Event Categories</div>
+        <div class="topbar-subtitle">Classification tags, visual colors, and icons for event discovery</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-primary btn-sm" onclick="openAddCategoryModal()">
+          <span>➕</span> Add Category
+        </button>
+        <span id="topbar-user-name" style="font-size:.85rem;color:var(--gray-600);font-weight:600;"></span>
+      </div>
+    </header>
+
+    <div class="page-content">
+
+      <!-- PAGE HEADER -->
+      <div class="page-header">
+        <div class="page-header-left">
+          <h2>All Categories (<span id="cat-count">0</span>)</h2>
+          <p>Customize how events are themed, grouped, and filtered across the student portal</p>
+        </div>
+        <div class="page-header-actions">
+          <div class="search-input-wrap">
+            <span class="search-icon">🔍</span>
+            <input
+              type="text"
+              id="search-input"
+              class="search-input"
+              placeholder="Search category name..."
+              oninput="handleSearch()"
+            >
+          </div>
+        </div>
+      </div>
+
+      <!-- 4-COLUMN CATEGORY GRID -->
+      <div class="category-grid" id="categories-grid">
+        <div style="grid-column:1/-1;text-align:center;padding:48px;color:var(--gray-400);">Loading categories...</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ADD / EDIT CATEGORY MODAL -->
+<div class="modal-overlay" id="category-modal" style="display:none;">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-header">
+      <h3 id="modal-cat-title">Add New Category</h3>
+      <button class="modal-close" onclick="modal.hide('category-modal')">✕</button>
+    </div>
+    <form id="cat-form" onsubmit="handleCategorySubmit(event)">
+      <div class="modal-body">
+        <input type="hidden" id="cat-id">
+
+        <div class="form-group">
+          <label class="form-label" for="cat-name">Category Name <span class="required">*</span></label>
+          <input
+            type="text"
+            id="cat-name"
+            class="form-control"
+            placeholder="e.g. Technical & Hackathons"
+            required
+          >
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="cat-color">Theme Color</label>
+            <div class="color-picker-group">
+              <input
+                type="color"
+                id="cat-color"
+                value="#4f46e5"
+                class="color-preview-box"
+                style="padding:0;border:none;background:none;border-radius:8px;"
+              >
+              <input
+                type="text"
+                id="cat-color-hex"
+                class="form-control"
+                value="#4f46e5"
+                style="font-family:monospace;width:120px;"
+                oninput="syncColorInput(this.value)"
+              >
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="cat-status">Status</label>
+            <select id="cat-status" class="form-control">
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="cat-icon">Icon or Emoji</label>
+          <input
+            type="text"
+            id="cat-icon"
+            class="form-control"
+            placeholder="e.g. 💻 or calendar"
+            value="💻"
+          >
+          <div class="emoji-presets">
+            <button type="button" class="emoji-preset-btn" onclick="selectEmoji('💻')">💻</button>
+            <button type="button" class="emoji-preset-btn" onclick="selectEmoji('🎨')">🎨</button>
+            <button type="button" class="emoji-preset-btn" onclick="selectEmoji('🏆')">🏆</button>
+            <button type="button" class="emoji-preset-btn" onclick="selectEmoji('🎵')">🎵</button>
+            <button type="button" class="emoji-preset-btn" onclick="selectEmoji('🔬')">🔬</button>
+            <button type="button" class="emoji-preset-btn" onclick="selectEmoji('🎭')">🎭</button>
+            <button type="button" class="emoji-preset-btn" onclick="selectEmoji('🎪')">🎪</button>
+            <button type="button" class="emoji-preset-btn" onclick="selectEmoji('📚')">📚</button>
+            <button type="button" class="emoji-preset-btn" onclick="selectEmoji('🚀')">🚀</button>
+            <button type="button" class="emoji-preset-btn" onclick="selectEmoji('🤝')">🤝</button>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" onclick="modal.hide('category-modal')">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="save-cat-btn">Save Category</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="../js/api.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/utils.js"></script>
+<script>
+  let categoriesList = [];
+  let isEditing = false;
+  let searchTimer = null;
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    if (!auth.requireRole('admin', '../admin/login.html')) return;
+    auth.populateSidebarUser();
+    setActiveNavLink();
+    initSidebarToggle();
+
+    // Color picker sync
+    document.getElementById('cat-color').addEventListener('input', (e) => {
+      document.getElementById('cat-color-hex').value = e.target.value;
+    });
+
+    await loadCategories();
+  });
+
+  function syncColorInput(hex) {
+    if (/^#[0-9A-F]{6}$/i.test(hex)) {
+      document.getElementById('cat-color').value = hex;
+    }
+  }
+
+  function selectEmoji(emoji) {
+    document.getElementById('cat-icon').value = emoji;
+  }
+
+  async function loadCategories() {
+    loader.show();
+    try {
+      const res = await api.admin.getCategories();
+      categoriesList = res.data || [];
+      document.getElementById('cat-count').textContent = categoriesList.length;
+      renderCategories(categoriesList);
+    } catch (err) {
+      toast.error('Failed to load categories: ' + err.message);
+      document.getElementById('categories-grid').innerHTML = `
+        <div style="grid-column:1/-1;text-align:center;color:var(--danger);padding:32px;">Failed to load categories.</div>
+      `;
+    } finally {
+      loader.hide();
+    }
+  }
+
+  function handleSearch() {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => {
+      const q = document.getElementById('search-input').value.toLowerCase().trim();
+      const filtered = categoriesList.filter(c => 
+        (c.name || '').toLowerCase().includes(q) ||
+        (c.slug || '').toLowerCase().includes(q)
+      );
+      renderCategories(filtered);
+    }, 200);
+  }
+
+  function renderCategories(items) {
+    const grid = document.getElementById('categories-grid');
+    if (!items || items.length === 0) {
+      grid.innerHTML = `
+        <div style="grid-column:1/-1;">
+          ${emptyState('🏷️', 'No Categories Found', 'Click "Add Category" to create a new category.')}
+        </div>
+      `;
+      return;
+    }
+
+    grid.innerHTML = items.map(cat => {
+      const color = cat.color || '#4f46e5';
+      const icon = cat.icon || '📅';
+
+      return `
+        <div class="cat-card">
+          <div class="cat-color-disc" style="background:${color}20;color:${color};border:2px solid ${color}40;">
+            ${escapeHtml(icon)}
+          </div>
+
+          <div class="cat-name">${escapeHtml(cat.name)}</div>
+          <div class="cat-slug">#${escapeHtml(cat.slug || cat.name.toLowerCase().replace(/\s+/g, '-'))}</div>
+
+          <div style="margin-bottom:16px;">
+            ${badge.accountStatus(cat.status || 'active')}
+          </div>
+
+          <div style="display:flex;gap:8px;margin-top:auto;width:100%;justify-content:center;">
+            <button class="btn btn-outline btn-sm" onclick="openEditCategoryModal('${cat._id}')" style="flex:1;">
+              Edit
+            </button>
+            <button class="btn btn-ghost btn-sm" style="color:var(--danger);" onclick="deleteCategory('${cat._id}', '${escapeHtml(cat.name)}')" title="Delete category">
+              🗑️
+            </button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function openAddCategoryModal() {
+    isEditing = false;
+    document.getElementById('modal-cat-title').textContent = 'Add New Category';
+    document.getElementById('cat-id').value = '';
+    document.getElementById('cat-name').value = '';
+    document.getElementById('cat-color').value = '#4f46e5';
+    document.getElementById('cat-color-hex').value = '#4f46e5';
+    document.getElementById('cat-icon').value = '💻';
+    document.getElementById('cat-status').value = 'active';
+    modal.show('category-modal');
+  }
+
+  function openEditCategoryModal(id) {
+    const cat = categoriesList.find(c => c._id === id);
+    if (!cat) return;
+
+    isEditing = true;
+    document.getElementById('modal-cat-title').textContent = 'Edit Category';
+    document.getElementById('cat-id').value = cat._id;
+    document.getElementById('cat-name').value = cat.name;
+    document.getElementById('cat-color').value = cat.color || '#4f46e5';
+    document.getElementById('cat-color-hex').value = cat.color || '#4f46e5';
+    document.getElementById('cat-icon').value = cat.icon || '💻';
+    document.getElementById('cat-status').value = cat.status || 'active';
+    modal.show('category-modal');
+  }
+
+  async function handleCategorySubmit(e) {
+    e.preventDefault();
+    const id = document.getElementById('cat-id').value;
+    const name = document.getElementById('cat-name').value.trim();
+    const color = document.getElementById('cat-color-hex').value.trim();
+    const icon = document.getElementById('cat-icon').value.trim();
+    const status = document.getElementById('cat-status').value;
+
+    const btn = document.getElementById('save-cat-btn');
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+
+    try {
+      const payload = { name, color, icon, status };
+      if (isEditing && id) {
+        await api.admin.updateCategory(id, payload);
+        toast.success(`Category "${name}" updated.`);
+      } else {
+        await api.admin.createCategory(payload);
+        toast.success(`Category "${name}" created.`);
+      }
+      modal.hide('category-modal');
+      await loadCategories();
+    } catch (err) {
+      toast.error('Failed to save category: ' + err.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Save Category';
+    }
+  }
+
+  async function deleteCategory(id, name) {
+    const ok = await modal.confirm({
+      title: 'Delete Category',
+      message: `Are you sure you want to delete category "${name}"? Existing events using this category may need reassignment.`,
+      confirmText: 'Delete Category',
+      type: 'danger'
+    });
+    if (!ok) return;
+
+    loader.show();
+    try {
+      await api.admin.deleteCategory(id);
+      toast.success(`Category "${name}" deleted.`);
+      await loadCategories();
+    } catch (err) {
+      toast.error('Failed to delete category: ' + err.message);
+    } finally {
+      loader.hide();
+    }
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>"']/g, m => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    })[m]);
+  }
+</script>
+
+</body>
+</html>

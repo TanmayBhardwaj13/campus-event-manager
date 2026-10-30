@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Students - Admin Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  <style>
+    .student-detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 20px;
+      background: var(--gray-50);
+      padding: 16px;
+      border-radius: var(--border-radius-sm);
+      border: 1px solid var(--gray-200);
+    }
+    .detail-item-label {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+    .detail-item-value {
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-top: 2px;
+    }
+    .reg-history-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--gray-100);
+    }
+    .reg-history-item:last-child {
+      border-bottom: none;
+    }
+  </style>
+</head>
+<body>
+
+<div class="dashboard-layout">
+  <div class="sidebar-overlay" onclick="document.querySelector('.sidebar').classList.remove('open');this.classList.remove('visible')"></div>
+  
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-icon">🎓</div>
+      <div class="sidebar-brand-text">
+        <div class="brand-name">CampusEvents</div>
+        <div class="brand-role">Admin Portal</div>
+      </div>
+    </div>
+    
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Main</div>
+      <ul class="sidebar-nav">
+        <li><a href="dashboard.html"><span class="nav-icon">🏠</span> Dashboard</a></li>
+        <li><a href="events.html"><span class="nav-icon">📅</span> Events</a></li>
+        <li><a href="students.html"><span class="nav-icon">👥</span> Students</a></li>
+        <li><a href="hosts.html"><span class="nav-icon">👔</span> Hosts</a></li>
+        <li><a href="departments.html"><span class="nav-icon">🏛️</span> Departments</a></li>
+        <li><a href="clubs.html"><span class="nav-icon">🎯</span> Clubs</a></li>
+        <li><a href="categories.html"><span class="nav-icon">🏷️</span> Categories</a></li>
+        <li><a href="analytics.html"><span class="nav-icon">📊</span> Analytics</a></li>
+      </ul>
+    </div>
+    
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">System</div>
+      <ul class="sidebar-nav">
+        <li><a href="settings.html"><span class="nav-icon">⚙️</span> Settings</a></li>
+      </ul>
+    </div>
+    
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="sidebar-user-avatar" id="sidebar-user-avatar">A</div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name" id="sidebar-user-name">Admin</div>
+          <div class="sidebar-user-role" id="sidebar-user-role">admin</div>
+        </div>
+      </div>
+      <button class="btn btn-ghost w-full" style="color:#94a3b8;margin-top:8px" onclick="auth.logoutRole('admin')">Logout</button>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <div class="main-content">
+    <header class="topbar">
+      <button class="topbar-menu-btn" id="sidebar-toggle">☰</button>
+      <div>
+        <div class="topbar-title">Student Directory</div>
+        <div class="topbar-subtitle">Manage registered campus students, status, and event activity</div>
+      </div>
+      <div class="topbar-actions">
+        <span id="topbar-user-name" style="font-size:.85rem;color:var(--gray-600);font-weight:600;"></span>
+      </div>
+    </header>
+
+    <div class="page-content">
+      
+      <!-- TOP STATS -->
+      <div class="stats-grid stats-grid-4" style="margin-bottom:20px;">
+        <div class="stat-card indigo">
+          <div class="stat-icon">🎓</div>
+          <div class="stat-value" id="total-students-count">0</div>
+          <div class="stat-label">Total Registered Students</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-icon">✅</div>
+          <div class="stat-value" id="active-students-count">0</div>
+          <div class="stat-label">Active Accounts</div>
+        </div>
+        <div class="stat-card orange">
+          <div class="stat-icon">⏸️</div>
+          <div class="stat-value" id="inactive-students-count">0</div>
+          <div class="stat-label">Inactive Accounts</div>
+        </div>
+        <div class="stat-card red">
+          <div class="stat-icon">🚫</div>
+          <div class="stat-value" id="suspended-students-count">0</div>
+          <div class="stat-label">Suspended Accounts</div>
+        </div>
+      </div>
+
+      <!-- MAIN TABLE CONTAINER -->
+      <div class="table-wrapper">
+        <div class="table-header">
+          <h4>Students List</h4>
+          
+          <!-- SEARCH & FILTERS -->
+          <div class="table-controls">
+            <div class="search-input-wrap">
+              <span class="search-icon">🔍</span>
+              <input
+                type="text"
+                id="search-input"
+                class="search-input"
+                placeholder="Search by name, email..."
+                oninput="handleSearchInput()"
+              >
+            </div>
+
+            <!-- Department Filter -->
+            <select id="department-filter" class="filter-select" onchange="applyFilters()">
+              <option value="">All Departments</option>
+            </select>
+
+            <!-- Year Filter -->
+            <select id="year-filter" class="filter-select" onchange="applyFilters()">
+              <option value="">All Years</option>
+              <option value="1">1st Year</option>
+              <option value="2">2nd Year</option>
+              <option value="3">3rd Year</option>
+              <option value="4">4th Year</option>
+              <option value="5">5th Year</option>
+            </select>
+
+            <!-- Status Filter -->
+            <select id="status-filter" class="filter-select" onchange="applyFilters()">
+              <option value="">All Status</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+              <option value="suspended">Suspended</option>
+            </select>
+
+            <button class="btn btn-light btn-sm" onclick="resetFilters()">Reset</button>
+          </div>
+        </div>
+
+        <!-- STUDENTS TABLE -->
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Student</th>
+                <th>Student ID</th>
+                <th>Department</th>
+                <th>Year</th>
+                <th>Account Status</th>
+                <th>Joined</th>
+                <th style="text-align:right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="students-tbody">
+              <tr><td colspan="7" style="text-align:center;padding:32px;color:var(--gray-400);">Loading students directory...</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- PAGINATION -->
+        <div class="pagination" id="pagination-container" style="display:none;">
+          <div class="pagination-info" id="pagination-info">Showing 0 of 0 students</div>
+          <div class="pagination-btns" id="pagination-btns"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- VIEW STUDENT PROFILE MODAL -->
+<div class="modal-overlay" id="profile-modal" style="display:none;">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div class="sidebar-user-avatar" id="modal-student-avatar" style="width:42px;height:42px;font-size:1.1rem;">S</div>
+        <div>
+          <h3 id="modal-student-name" style="margin:0;font-size:1.2rem;">Student Name</h3>
+          <div id="modal-student-email" style="font-size:0.85rem;color:var(--gray-500);">student@campus.edu</div>
+        </div>
+      </div>
+      <button class="modal-close" onclick="modal.hide('profile-modal')">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <!-- DETAILS GRID -->
+      <h4 style="font-size:0.95rem;font-weight:700;margin-bottom:12px;color:var(--gray-900);">Academic & Account Information</h4>
+      <div class="student-detail-grid">
+        <div>
+          <div class="detail-item-label">Student ID</div>
+          <div class="detail-item-value" id="modal-student-id">-</div>
+        </div>
+        <div>
+          <div class="detail-item-label">Department</div>
+          <div class="detail-item-value" id="modal-student-dept">-</div>
+        </div>
+        <div>
+          <div class="detail-item-label">Course / Program</div>
+          <div class="detail-item-value" id="modal-student-course">-</div>
+        </div>
+        <div>
+          <div class="detail-item-label">Current Year</div>
+          <div class="detail-item-value" id="modal-student-year">-</div>
+        </div>
+        <div>
+          <div class="detail-item-label">Phone</div>
+          <div class="detail-item-value" id="modal-student-phone">-</div>
+        </div>
+        <div>
+          <div class="detail-item-label">Account Status</div>
+          <div class="detail-item-value" id="modal-student-status">-</div>
+        </div>
+      </div>
+
+      <!-- REGISTRATION ACTIVITY -->
+      <h4 style="font-size:0.95rem;font-weight:700;margin-top:20px;margin-bottom:12px;color:var(--gray-900);">
+        Event Registrations (<span id="modal-reg-count">0</span>)
+      </h4>
+      <div id="modal-registrations-list" style="border:1px solid var(--gray-200);border-radius:var(--border-radius-sm);max-height:240px;overflow-y:auto;background:#fff;">
+        <div style="padding:20px;text-align:center;color:var(--gray-400);">No registrations found for this student.</div>
+      </div>
+    </div>
+
+    <div class="modal-footer" id="modal-footer-actions">
+      <button class="btn btn-ghost" onclick="modal.hide('profile-modal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<script src="../js/api.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/utils.js"></script>
+<script>
+  let currentPage = 1;
+  const pageLimit = 15;
+  let searchTimeout = null;
+  let departmentsList = [];
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    if (!auth.requireRole('admin', '../admin/login.html')) return;
+    auth.populateSidebarUser();
+    setActiveNavLink();
+    initSidebarToggle();
+
+    await loadDepartments();
+    await fetchStudents();
+  });
+
+  async function loadDepartments() {
+    try {
+      const res = await api.admin.getDepartments();
+      departmentsList = res.data || [];
+      const deptSelect = document.getElementById('department-filter');
+      departmentsList.forEach(dept => {
+        const opt = document.createElement('option');
+        opt.value = dept._id;
+        opt.textContent = `${dept.name} (${dept.code})`;
+        deptSelect.appendChild(opt);
+      });
+    } catch (err) {
+      console.warn('Could not load departments:', err);
+    }
+  }
+
+  function handleSearchInput() {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+      currentPage = 1;
+      fetchStudents();
+    }, 350);
+  }
+
+  function applyFilters() {
+    currentPage = 1;
+    fetchStudents();
+  }
+
+  function resetFilters() {
+    document.getElementById('search-input').value = '';
+    document.getElementById('department-filter').value = '';
+    document.getElementById('year-filter').value = '';
+    document.getElementById('status-filter').value = '';
+    currentPage = 1;
+    fetchStudents();
+  }
+
+  async function fetchStudents() {
+    loader.show();
+    const search = document.getElementById('search-input').value.trim();
+    const dept = document.getElementById('department-filter').value;
+    const year = document.getElementById('year-filter').value;
+    const status = document.getElementById('status-filter').value;
+
+    const params = new URLSearchParams();
+    if (search) params.append('search', search);
+    if (dept) params.append('department', dept);
+    if (year) params.append('year', year);
+    if (status) params.append('status', status);
+    params.append('page', currentPage);
+    params.append('limit', pageLimit);
+
+    try {
+      const queryStr = `?${params.toString()}`;
+      const res = await api.admin.getStudents(queryStr);
+      const students = res.data || [];
+      const total = res.total || 0;
+      const totalPages = res.pages || 1;
+
+      renderStudentsTable(students);
+      renderPagination(total, totalPages);
+      updateOverviewCounts(students, total);
+    } catch (err) {
+      toast.error('Failed to fetch students: ' + err.message);
+      document.getElementById('students-tbody').innerHTML = `
+        <tr><td colspan="7" style="text-align:center;color:var(--danger);padding:24px;">Failed to load data.</td></tr>
+      `;
+    } finally {
+      loader.hide();
+    }
+  }
+
+  function updateOverviewCounts(students, total) {
+    document.getElementById('total-students-count').textContent = total.toLocaleString();
+    let active = 0, inactive = 0, suspended = 0;
+    students.forEach(s => {
+      if (s.status === 'active') active++;
+      else if (s.status === 'inactive') inactive++;
+      else if (s.status === 'suspended') suspended++;
+    });
+    document.getElementById('active-students-count').textContent = active;
+    document.getElementById('inactive-students-count').textContent = inactive;
+    document.getElementById('suspended-students-count').textContent = suspended;
+  }
+
+  function renderStudentsTable(students) {
+    const tbody = document.getElementById('students-tbody');
+    if (!students || students.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="7">
+            ${emptyState('👥', 'No Students Found', 'Try adjusting your search query or filters.')}
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    tbody.innerHTML = students.map(student => {
+      const profile = student.profile || {};
+      const deptName = profile.departmentId?.name || 'Unassigned';
+      const studentIdNum = profile.studentId || 'N/A';
+      const yearStr = profile.year ? `${profile.year}${getOrdinal(profile.year)} Year` : 'N/A';
+
+      return `
+        <tr>
+          <td>
+            <div class="user-cell">
+              ${avatarInitials(student.name, 36)}
+              <div class="user-cell-info">
+                <div class="user-name">${escapeHtml(student.name)}</div>
+                <div class="user-sub">${escapeHtml(student.email)}</div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <span style="font-family:monospace;font-weight:600;font-size:0.85rem;background:var(--gray-100);padding:2px 6px;border-radius:4px;">
+              ${escapeHtml(studentIdNum)}
+            </span>
+          </td>
+          <td>${escapeHtml(deptName)}</td>
+          <td><span class="badge badge-purple">${yearStr}</span></td>
+          <td>${badge.accountStatus(student.status)}</td>
+          <td style="font-size:0.82rem;color:var(--gray-500);">${fmt.shortDate(student.createdAt)}</td>
+          <td style="text-align:right;">
+            <div style="display:inline-flex;gap:6px;align-items:center;">
+              <button class="btn btn-outline btn-sm" onclick="openStudentProfile('${student._id}')" title="View details and registrations">
+                View Profile
+              </button>
+              
+              ${student.status !== 'active' ? `
+                <button class="btn btn-success btn-sm" onclick="changeStatus('${student._id}', 'active', '${escapeHtml(student.name)}')" title="Activate account">
+                  Activate
+                </button>
+              ` : `
+                <button class="btn btn-light btn-sm" onclick="changeStatus('${student._id}', 'inactive', '${escapeHtml(student.name)}')" title="Deactivate account">
+                  Deactivate
+                </button>
+              `}
+
+              ${student.status !== 'suspended' ? `
+                <button class="btn btn-outline-danger btn-sm" onclick="changeStatus('${student._id}', 'suspended', '${escapeHtml(student.name)}')" title="Suspend account">
+                  Suspend
+                </button>
+              ` : ''}
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function renderPagination(total, totalPages) {
+    const container = document.getElementById('pagination-container');
+    const info = document.getElementById('pagination-info');
+    const btns = document.getElementById('pagination-btns');
+
+    if (total === 0) {
+      container.style.display = 'none';
+      return;
+    }
+
+    container.style.display = 'flex';
+    const start = (currentPage - 1) * pageLimit + 1;
+    const end = Math.min(currentPage * pageLimit, total);
+    info.textContent = `Showing ${start} - ${end} of ${total} students`;
+
+    btns.innerHTML = '';
+
+    // Prev button
+    const prevBtn = document.createElement('button');
+    prevBtn.className = 'page-btn';
+    prevBtn.textContent = '‹';
+    prevBtn.disabled = currentPage === 1;
+    prevBtn.onclick = () => { if (currentPage > 1) { currentPage--; fetchStudents(); } };
+    btns.appendChild(prevBtn);
+
+    // Page buttons
+    for (let p = 1; p <= totalPages; p++) {
+      if (p === 1 || p === totalPages || (p >= currentPage - 2 && p <= currentPage + 2)) {
+        const pBtn = document.createElement('button');
+        pBtn.className = `page-btn ${p === currentPage ? 'active' : ''}`;
+        pBtn.textContent = p;
+        pBtn.onclick = () => { currentPage = p; fetchStudents(); };
+        btns.appendChild(pBtn);
+      } else if (p === currentPage - 3 || p === currentPage + 3) {
+        const dot = document.createElement('span');
+        dot.textContent = '...';
+        dot.style.padding = '0 4px';
+        dot.style.color = 'var(--gray-400)';
+        btns.appendChild(dot);
+      }
+    }
+
+    // Next button
+    const nextBtn = document.createElement('button');
+    nextBtn.className = 'page-btn';
+    nextBtn.textContent = '›';
+    nextBtn.disabled = currentPage === totalPages;
+    nextBtn.onclick = () => { if (currentPage < totalPages) { currentPage++; fetchStudents(); } };
+    btns.appendChild(nextBtn);
+  }
+
+  async function openStudentProfile(id) {
+    loader.show();
+    try {
+      const res = await api.admin.getStudent(id);
+      const student = res.data || {};
+      const profile = student.profile || {};
+      const registrations = student.registrations || [];
+
+      // Populate basic info
+      document.getElementById('modal-student-name').textContent = student.name || 'Unknown Student';
+      document.getElementById('modal-student-email').textContent = student.email || '';
+      document.getElementById('modal-student-avatar').textContent = (student.name || 'S')[0].toUpperCase();
+      document.getElementById('modal-student-id').textContent = profile.studentId || 'N/A';
+      document.getElementById('modal-student-dept').textContent = profile.departmentId?.name || 'Unassigned';
+      document.getElementById('modal-student-course').textContent = profile.course || 'N/A';
+      document.getElementById('modal-student-year').textContent = profile.year ? `${profile.year}${getOrdinal(profile.year)} Year` : 'N/A';
+      document.getElementById('modal-student-phone').textContent = profile.phone || 'Not provided';
+      document.getElementById('modal-student-status').innerHTML = badge.accountStatus(student.status);
+
+      // Populate registrations
+      document.getElementById('modal-reg-count').textContent = registrations.length;
+      const regContainer = document.getElementById('modal-registrations-list');
+
+      if (registrations.length === 0) {
+        regContainer.innerHTML = '<div style="padding:24px;text-align:center;color:var(--gray-400);">Student has not registered for any events yet.</div>';
+      } else {
+        regContainer.innerHTML = registrations.map(reg => {
+          const eventTitle = reg.eventId?.title || 'Unknown Event';
+          const eventDate = reg.eventId?.date ? fmt.date(reg.eventId.date) : 'N/A';
+          return `
+            <div class="reg-history-item">
+              <div>
+                <div style="font-weight:600;color:var(--gray-900);font-size:0.88rem;">${escapeHtml(eventTitle)}</div>
+                <div style="font-size:0.75rem;color:var(--gray-500);">Event Date: ${eventDate} • Registered: ${fmt.date(reg.registeredAt || reg.createdAt)}</div>
+              </div>
+              <div style="display:flex;gap:6px;align-items:center;">
+                ${badge.registrationStatus(reg.status)}
+                ${badge.attendanceStatus(reg.attendanceStatus || 'not-marked')}
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      modal.show('profile-modal');
+    } catch (err) {
+      toast.error('Failed to load student details: ' + err.message);
+    } finally {
+      loader.hide();
+    }
+  }
+
+  async function changeStatus(id, newStatus, studentName) {
+    const titles = {
+      active: 'Activate Student',
+      inactive: 'Deactivate Student',
+      suspended: 'Suspend Student Account'
+    };
+    const messages = {
+      active: `Are you sure you want to activate ${studentName}'s account?`,
+      inactive: `Are you sure you want to deactivate ${studentName}? They will not be able to register for events.`,
+      suspended: `Are you sure you want to suspend ${studentName}? This will restrict portal access.`
+    };
+    const types = {
+      active: 'success',
+      inactive: 'warning',
+      suspended: 'danger'
+    };
+
+    const confirmed = await modal.confirm({
+      title: titles[newStatus],
+      message: messages[newStatus],
+      confirmText: newStatus.toUpperCase(),
+      type: types[newStatus]
+    });
+
+    if (!confirmed) return;
+
+    loader.show();
+    try {
+      await api.admin.updateStudentStatus(id, { status: newStatus });
+      toast.success(`Student account updated to ${newStatus}`);
+      await fetchStudents();
+    } catch (err) {
+      toast.error('Failed to update status: ' + err.message);
+    } finally {
+      loader.hide();
+    }
+  }
+
+  function getOrdinal(n) {
+    const s = ["th", "st", "nd", "rd"];
+    const v = n % 100;
+    return s[(v - 20) % 10] || s[v] || s[0];
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>"']/g, m => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    })[m]);
+  }
+</script>
+
+</body>
+</html>

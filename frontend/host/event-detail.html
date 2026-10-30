@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Event Details - Host Portal - Campus Event Manager</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/utils.js"></script>
+  <style>
+    .event-hero {
+      background: #ffffff;
+      border-radius: var(--border-radius);
+      border: 1px solid var(--gray-200);
+      overflow: hidden;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow-sm);
+    }
+    .event-hero-banner {
+      height: 240px;
+      background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4f46e5 100%);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: flex-end;
+      padding: 24px;
+    }
+    .event-hero-banner img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0.85;
+    }
+    .event-hero-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(15,23,42,0.1) 0%, rgba(15,23,42,0.8) 100%);
+    }
+    .event-hero-content {
+      position: relative;
+      z-index: 2;
+      color: #fff;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      width: 100%;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .event-hero-body {
+      padding: 20px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      background: #fff;
+    }
+    .detail-card {
+      background: #ffffff;
+      border-radius: var(--border-radius);
+      border: 1px solid var(--gray-200);
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow-sm);
+    }
+    .detail-card-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--gray-900);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .info-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .info-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--gray-100);
+      font-size: 0.9rem;
+    }
+    .info-item:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+    .info-label {
+      color: var(--gray-500);
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .info-value {
+      font-weight: 600;
+      color: var(--gray-900);
+      text-align: right;
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar-overlay"></div>
+
+  <div class="dashboard-layout">
+    <!-- HOST SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-icon">🎟️</div>
+        <div class="sidebar-brand-text">
+          <div class="brand-name">CampusEvents</div>
+          <div class="brand-role">Host Portal</div>
+        </div>
+      </div>
+      <ul class="sidebar-nav" style="padding:12px">
+        <li><a href="dashboard.html"><span class="nav-icon">🏠</span> Dashboard</a></li>
+        <li><a href="events.html"><span class="nav-icon">📅</span> My Events</a></li>
+        <li><a href="create-event.html"><span class="nav-icon">➕</span> Create Event</a></li>
+        <li><a href="analytics.html"><span class="nav-icon">📊</span> Analytics</a></li>
+        <li><a href="profile.html"><span class="nav-icon">👤</span> Profile</a></li>
+      </ul>
+      <div class="sidebar-footer">
+        <div class="sidebar-user" onclick="window.location.href='profile.html'">
+          <div class="sidebar-user-avatar" id="sidebar-user-avatar">H</div>
+          <div class="sidebar-user-info">
+            <div class="sidebar-user-name" id="sidebar-user-name">Host</div>
+            <div class="sidebar-user-role" id="sidebar-user-role">host</div>
+          </div>
+        </div>
+        <button class="btn btn-ghost w-full" style="color:#94a3b8;margin-top:8px" onclick="auth.logoutRole('host')">Logout</button>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+      <!-- TOPBAR -->
+      <header class="topbar">
+        <button class="topbar-menu-btn" id="sidebar-toggle" aria-label="Toggle navigation menu">☰</button>
+        <div>
+          <div class="topbar-title">Event Overview</div>
+          <div class="topbar-subtitle">Detailed lifecycle, venue, rules, and participant engagement</div>
+        </div>
+        <div class="topbar-actions">
+          <a href="events.html" class="btn btn-ghost btn-sm">← Back to Events</a>
+        </div>
+      </header>
+
+      <!-- PAGE CONTENT -->
+      <div class="page-content" id="detail-page-content">
+        <!-- Breadcrumb -->
+        <div class="breadcrumb">
+          <a href="dashboard.html">Dashboard</a>
+          <span class="breadcrumb-sep">/</span>
+          <a href="events.html">Events</a>
+          <span class="breadcrumb-sep">/</span>
+          <span id="breadcrumb-title">Event Details</span>
+        </div>
+
+        <!-- REJECTION ALERT (if rejected) -->
+        <div id="rejection-alert" class="alert alert-danger" style="display:none; margin-bottom: 24px;">
+          <div class="alert-icon">❌</div>
+          <div class="alert-content">
+            <h5>Event Disapproved by Administrator</h5>
+            <p id="rejection-reason-text">No rejection reason specified.</p>
+            <div style="margin-top: 8px;">
+              <a href="#" id="edit-rejected-btn" class="btn btn-danger btn-sm">Edit & Resubmit Event</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- EVENT HERO -->
+        <div class="event-hero">
+          <div class="event-hero-banner" id="hero-banner">
+            <div class="event-hero-overlay"></div>
+            <img id="hero-image" alt="Event Banner" style="display:none;">
+            <div class="event-hero-content">
+              <div>
+                <div style="display:flex; gap:8px; margin-bottom:8px; flex-wrap:wrap;">
+                  <span class="badge" id="category-badge" style="background:rgba(255,255,255,0.25); color:#fff; font-weight:700;">Category</span>
+                  <span id="approval-badge"></span>
+                  <span id="status-badge"></span>
+                </div>
+                <h1 id="event-title" style="color:#fff; font-size:1.85rem; margin-bottom:4px; font-weight:800;">Loading Event...</h1>
+                <div id="event-datetime-hero" style="font-size:0.95rem; color:#e0e7ff;">Loading schedule...</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="event-hero-body">
+            <div style="display:flex; align-items:center; gap:16px;">
+              <div style="font-size:0.85rem; color:var(--gray-500);">
+                Event ID: <strong id="event-id-display" style="color:var(--gray-700);">-</strong>
+              </div>
+              <div style="font-size:0.85rem; color:var(--gray-500);">
+                Created: <strong id="event-created-display" style="color:var(--gray-700);">-</strong>
+              </div>
+            </div>
+            <div id="hero-actions" style="display:flex; gap:10px; align-items:center;">
+              <!-- Dynamic buttons inserted here -->
+            </div>
+          </div>
+        </div>
+
+        <!-- APPROVAL & LIFECYCLE WORKFLOW -->
+        <div style="margin-bottom: 24px;">
+          <div style="font-size: 0.9rem; font-weight: 700; color: var(--gray-700); margin-bottom: 8px;">Event Lifecycle & Approval Progress</div>
+          <div class="workflow-steps" id="workflow-container">
+            <div class="workflow-step" id="wf-draft">
+              <div class="workflow-step-dot">1</div>
+              <div class="workflow-step-label">Draft</div>
+            </div>
+            <div class="workflow-connector" id="wc-1"></div>
+
+            <div class="workflow-step" id="wf-pending">
+              <div class="workflow-step-dot">2</div>
+              <div class="workflow-step-label">Pending Approval</div>
+            </div>
+            <div class="workflow-connector" id="wc-2"></div>
+
+            <div class="workflow-step" id="wf-approved">
+              <div class="workflow-step-dot">3</div>
+              <div class="workflow-step-label">Approved</div>
+            </div>
+            <div class="workflow-connector" id="wc-3"></div>
+
+            <div class="workflow-step" id="wf-published">
+              <div class="workflow-step-dot">4</div>
+              <div class="workflow-step-label">Published</div>
+            </div>
+            <div class="workflow-connector" id="wc-4"></div>
+
+            <div class="workflow-step" id="wf-ongoing">
+              <div class="workflow-step-dot">5</div>
+              <div class="workflow-step-label">Ongoing</div>
+            </div>
+            <div class="workflow-connector" id="wc-5"></div>
+
+            <div class="workflow-step" id="wf-completed">
+              <div class="workflow-step-dot">6</div>
+              <div class="workflow-step-label">Completed</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MAIN DETAILS GRID (2 columns) -->
+        <div class="section-grid">
+          <!-- Left Column: Description, Rules, Requirements, Eligibility -->
+          <div>
+            <!-- Description -->
+            <div class="detail-card">
+              <div class="detail-card-title">📖 Description & Overview</div>
+              <p id="event-description" style="line-height:1.7; color:var(--gray-700); white-space:pre-line;">
+                Loading description...
+              </p>
+            </div>
+
+            <!-- Rules & Regulations -->
+            <div class="detail-card">
+              <div class="detail-card-title">📜 Rules & Guidelines</div>
+              <p id="event-rules" style="line-height:1.6; color:var(--gray-600); white-space:pre-line;">
+                Standard college campus rules apply. Please carry your student ID card.
+              </p>
+            </div>
+
+            <!-- Prerequisites & Requirements -->
+            <div class="detail-card">
+              <div class="detail-card-title">🎒 Prerequisites & What to Bring</div>
+              <p id="event-requirements" style="line-height:1.6; color:var(--gray-600); white-space:pre-line;">
+                No special prerequisites specified.
+              </p>
+            </div>
+          </div>
+
+          <!-- Right Column: Registration stats, Venue, Schedule, Organizer -->
+          <div>
+            <!-- Registration Stats Card -->
+            <div class="detail-card">
+              <div class="detail-card-title">👥 Registration Capacity</div>
+              <div id="registration-progress-box" style="margin-bottom:16px;">
+                <!-- progress bar -->
+              </div>
+              <div class="info-list">
+                <div class="info-item">
+                  <span class="info-label">Max Seat Limit</span>
+                  <span class="info-value" id="info-max">-</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Current Registrations</span>
+                  <span class="info-value" id="info-current">-</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Seats Remaining</span>
+                  <span class="info-value" id="info-remaining">-</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Eligibility</span>
+                  <span class="info-value" id="info-eligibility">All students</span>
+                </div>
+              </div>
+              <div style="margin-top:16px;">
+                <a href="#" id="view-participants-btn" class="btn btn-outline w-full" style="display:none;">
+                  Manage Participant Roll & Attendance →
+                </a>
+              </div>
+            </div>
+
+            <!-- Schedule Card -->
+            <div class="detail-card">
+              <div class="detail-card-title">⏰ Schedule & Deadlines</div>
+              <div class="info-list">
+                <div class="info-item">
+                  <span class="info-label">Event Date</span>
+                  <span class="info-value" id="info-date">-</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Start Time</span>
+                  <span class="info-value" id="info-start-time">-</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">End Time</span>
+                  <span class="info-value" id="info-end-time">-</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Registration Closes</span>
+                  <span class="info-value" id="info-deadline">-</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Venue Details Card -->
+            <div class="detail-card">
+              <div class="detail-card-title">📍 College Venue</div>
+              <div class="info-list">
+                <div class="info-item">
+                  <span class="info-label">Building</span>
+                  <span class="info-value" id="info-building">-</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Block / Floor</span>
+                  <span class="info-value" id="info-block">-</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Room / Hall</span>
+                  <span class="info-value" id="info-room">-</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Directions / Notes</span>
+                  <span class="info-value" id="info-venue-notes">-</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Organizer Affiliation Card -->
+            <div class="detail-card">
+              <div class="detail-card-title">🏛️ Host Organization</div>
+              <div class="info-list">
+                <div class="info-item">
+                  <span class="info-label">Department</span>
+                  <span class="info-value" id="info-dept">-</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Club Affiliation</span>
+                  <span class="info-value" id="info-club">Independent</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    let currentEvent = null;
+    let eventId = null;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!auth.requireRole('host', '../host/login.html')) return;
+      auth.populateSidebarUser();
+      setActiveNavLink();
+      initSidebarToggle();
+
+      const params = new URLSearchParams(window.location.search);
+      eventId = params.get('id');
+
+      if (!eventId) {
+        toast.error('No event ID specified');
+        setTimeout(() => window.location.href = 'events.html', 1000);
+        return;
+      }
+
+      await loadEvent();
+    });
+
+    async function loadEvent() {
+      loader.show();
+      try {
+        // Try getParticipants endpoint which gives { event, registrations } for host
+        let ev = null;
+        try {
+          const partRes = await api.host.getParticipants(eventId);
+          if (partRes.success && partRes.data?.event) {
+            ev = partRes.data.event;
+          }
+        } catch (e) {
+          // Fallback to getEvents
+          const eventsRes = await api.host.getEvents();
+          if (eventsRes.success && Array.isArray(eventsRes.data)) {
+            ev = eventsRes.data.find(x => x._id === eventId);
+          }
+        }
+
+        loader.hide();
+
+        if (!ev) {
+          toast.error('Event not found');
+          return;
+        }
+
+        currentEvent = ev;
+        renderEventDetails(ev);
+      } catch (err) {
+        loader.hide();
+        toast.error('Failed to load event details: ' + err.message);
+      }
+    }
+
+    function renderEventDetails(ev) {
+      document.getElementById('breadcrumb-title').textContent = ev.title;
+      document.getElementById('event-title').textContent = ev.title;
+      document.getElementById('event-id-display').textContent = ev._id.slice(-8);
+      document.getElementById('event-created-display').textContent = fmt.shortDate(ev.createdAt);
+      document.getElementById('event-description').textContent = ev.description || 'No description provided.';
+      document.getElementById('event-rules').textContent = ev.rules || 'Standard college rules and conduct apply.';
+      document.getElementById('event-requirements').textContent = ev.requirements || 'No special requirements specified.';
+
+      // Hero image or gradient
+      if (ev.image) {
+        const img = document.getElementById('hero-image');
+        img.src = imgUrl(ev.image);
+        img.style.display = 'block';
+      }
+
+      // Badges
+      const catName = ev.categoryId?.name || 'General';
+      document.getElementById('category-badge').textContent = catName;
+      document.getElementById('approval-badge').innerHTML = badge.approvalStatus(ev.approvalStatus);
+      document.getElementById('status-badge').innerHTML = badge.eventStatus(ev.eventStatus);
+
+      // Schedule Hero
+      document.getElementById('event-datetime-hero').textContent =
+        `📅 ${fmt.date(ev.date)} · ⏰ ${ev.startTime || ''} to ${ev.endTime || ''} · 📍 ${ev.building || 'Campus'}, Room ${ev.room || 'TBA'}`;
+
+      // Schedule Card
+      document.getElementById('info-date').textContent = fmt.date(ev.date);
+      document.getElementById('info-start-time').textContent = ev.startTime || 'N/A';
+      document.getElementById('info-end-time').textContent = ev.endTime || 'N/A';
+      document.getElementById('info-deadline').textContent = fmt.date(ev.registrationDeadline);
+
+      // Venue Card
+      document.getElementById('info-building').textContent = ev.building || 'Campus Main';
+      document.getElementById('info-block').textContent = ev.block || 'N/A';
+      document.getElementById('info-room').textContent = ev.room || 'N/A';
+      document.getElementById('info-venue-notes').textContent = ev.venueDetails || 'None';
+
+      // Organizer
+      document.getElementById('info-dept').textContent = ev.departmentId?.name || 'College Department';
+      document.getElementById('info-club').textContent = ev.clubId?.name || 'Department Sponsored';
+
+      // Registration stats
+      const max = ev.maxParticipants || 100;
+      const current = ev.currentRegistrations || 0;
+      const rem = Math.max(0, max - current);
+      document.getElementById('info-max').textContent = `${max} seats`;
+      document.getElementById('info-current').textContent = `${current} registered`;
+      document.getElementById('info-remaining').textContent = `${rem} remaining`;
+      document.getElementById('info-eligibility').textContent = ev.eligibility || 'All students';
+      document.getElementById('registration-progress-box').innerHTML = progressBar(current, max);
+
+      // Rejection alert
+      if (ev.approvalStatus === 'rejected') {
+        const rejBox = document.getElementById('rejection-alert');
+        rejBox.style.display = 'flex';
+        document.getElementById('rejection-reason-text').textContent =
+          ev.rejectionReason || 'The event was declined by an administrator. Please review venue or policy rules and update the event.';
+        document.getElementById('edit-rejected-btn').href = `create-event.html?id=${ev._id}`;
+      }
+
+      // Workflow Visualization
+      updateWorkflow(ev);
+
+      // Action Buttons
+      renderActionButtons(ev);
+    }
+
+    function updateWorkflow(ev) {
+      // Steps: Draft (1) -> Pending (2) -> Approved (3) -> Published (4) -> Ongoing (5) -> Completed (6)
+      const steps = ['draft', 'pending', 'approved', 'published', 'ongoing', 'completed'];
+
+      let currentStepIdx = 0;
+      if (ev.approvalStatus === 'draft') currentStepIdx = 0;
+      else if (ev.approvalStatus === 'pending') currentStepIdx = 1;
+      else if (ev.approvalStatus === 'approved') currentStepIdx = 2;
+      else if (ev.approvalStatus === 'published') {
+        if (ev.eventStatus === 'ongoing') currentStepIdx = 4;
+        else if (ev.eventStatus === 'completed') currentStepIdx = 5;
+        else currentStepIdx = 3;
+      }
+
+      steps.forEach((step, idx) => {
+        const stepEl = document.getElementById(`wf-${step}`);
+        if (!stepEl) return;
+
+        stepEl.classList.remove('done', 'active');
+        if (idx < currentStepIdx) {
+          stepEl.classList.add('done');
+          stepEl.querySelector('.workflow-step-dot').innerHTML = '✓';
+        } else if (idx === currentStepIdx) {
+          stepEl.classList.add('active');
+        }
+
+        // Connector
+        if (idx > 0) {
+          const conn = document.getElementById(`wc-${idx}`);
+          if (conn) {
+            if (idx <= currentStepIdx) conn.classList.add('done');
+            else conn.classList.remove('done');
+          }
+        }
+      });
+    }
+
+    function renderActionButtons(ev) {
+      const container = document.getElementById('hero-actions');
+      const partBtn = document.getElementById('view-participants-btn');
+      let buttons = '';
+
+      if (ev.approvalStatus === 'draft' || ev.approvalStatus === 'rejected') {
+        buttons = `
+          <a href="create-event.html?id=${ev._id}" class="btn btn-outline" style="border-color:var(--gray-300);">✏️ Edit Event</a>
+          <button class="btn btn-primary" onclick="submitForApproval('${ev._id}')">Submit for Approval</button>
+        `;
+      } else if (ev.approvalStatus === 'pending') {
+        buttons = `
+          <button class="btn btn-warning" disabled style="opacity:0.85; cursor:not-allowed;">⏳ Under Review</button>
+        `;
+      } else if (ev.approvalStatus === 'published') {
+        partBtn.style.display = 'block';
+        partBtn.href = `participants.html?id=${ev._id}`;
+
+        if (ev.eventStatus === 'upcoming' || ev.eventStatus === 'ongoing') {
+          buttons = `
+            <a href="participants.html?id=${ev._id}" class="btn btn-primary">👥 View Participants</a>
+            <button class="btn btn-outline-danger" onclick="cancelEvent('${ev._id}')">Cancel Event</button>
+          `;
+        } else if (ev.eventStatus === 'completed') {
+          buttons = `
+            <a href="participants.html?id=${ev._id}" class="btn btn-success">🎓 View Participants & Issue Certificates</a>
+          `;
+        } else if (ev.eventStatus === 'cancelled') {
+          buttons = `<span class="badge badge-danger">Event Cancelled</span>`;
+        }
+      }
+
+      container.innerHTML = buttons;
+    }
+
+    async function submitForApproval(id) {
+      const ok = await modal.confirm({
+        title: 'Submit Event for Admin Approval?',
+        message: 'Are you sure you want to submit this event for review by college administration?',
+        confirmText: 'Submit for Approval',
+        type: 'primary'
+      });
+      if (!ok) return;
+
+      loader.show();
+      try {
+        await api.host.submitEvent(id);
+        loader.hide();
+        toast.success('Event submitted for approval!');
+        await loadEvent();
+      } catch (err) {
+        loader.hide();
+        toast.error(err.message || 'Error submitting event');
+      }
+    }
+
+    async function cancelEvent(id) {
+      const ok = await modal.confirm({
+        title: 'Cancel Campus Event?',
+        message: 'Are you sure? All registered students will be notified.',
+        confirmText: 'Yes, Cancel Event',
+        type: 'danger'
+      });
+      if (!ok) return;
+
+      loader.show();
+      try {
+        await api.host.cancelEvent(id);
+        loader.hide();
+        toast.success('Event cancelled');
+        await loadEvent();
+      } catch (err) {
+        loader.hide();
+        toast.error(err.message || 'Error cancelling event');
+      }
+    }
+  </script>
+</body>
+</html>

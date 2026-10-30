@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Events - Admin Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  <style>
+    .event-thumb {
+      width: 44px;
+      height: 44px;
+      border-radius: 8px;
+      object-fit: cover;
+      flex-shrink: 0;
+      background: var(--gray-200);
+    }
+    .participant-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--gray-100);
+    }
+    .participant-row:last-child {
+      border-bottom: none;
+    }
+  </style>
+</head>
+<body>
+
+<div class="dashboard-layout">
+  <div class="sidebar-overlay" onclick="document.querySelector('.sidebar').classList.remove('open');this.classList.remove('visible')"></div>
+  
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-icon">🎓</div>
+      <div class="sidebar-brand-text">
+        <div class="brand-name">CampusEvents</div>
+        <div class="brand-role">Admin Portal</div>
+      </div>
+    </div>
+    
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Main</div>
+      <ul class="sidebar-nav">
+        <li><a href="dashboard.html"><span class="nav-icon">🏠</span> Dashboard</a></li>
+        <li><a href="events.html"><span class="nav-icon">📅</span> Events</a></li>
+        <li><a href="students.html"><span class="nav-icon">👥</span> Students</a></li>
+        <li><a href="hosts.html"><span class="nav-icon">👔</span> Hosts</a></li>
+        <li><a href="departments.html"><span class="nav-icon">🏛️</span> Departments</a></li>
+        <li><a href="clubs.html"><span class="nav-icon">🎯</span> Clubs</a></li>
+        <li><a href="categories.html"><span class="nav-icon">🏷️</span> Categories</a></li>
+        <li><a href="analytics.html"><span class="nav-icon">📊</span> Analytics</a></li>
+      </ul>
+    </div>
+    
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">System</div>
+      <ul class="sidebar-nav">
+        <li><a href="settings.html"><span class="nav-icon">⚙️</span> Settings</a></li>
+      </ul>
+    </div>
+    
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="sidebar-user-avatar" id="sidebar-user-avatar">A</div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name" id="sidebar-user-name">Admin</div>
+          <div class="sidebar-user-role" id="sidebar-user-role">admin</div>
+        </div>
+      </div>
+      <button class="btn btn-ghost w-full" style="color:#94a3b8;margin-top:8px" onclick="auth.logoutRole('admin')">Logout</button>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <div class="main-content">
+    <header class="topbar">
+      <button class="topbar-menu-btn" id="sidebar-toggle">☰</button>
+      <div>
+        <div class="topbar-title">Events Management & Moderation</div>
+        <div class="topbar-subtitle">Review proposals, monitor registrations, and manage publication states</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-light btn-sm" onclick="fetchEvents()">🔄 Refresh</button>
+        <span id="topbar-user-name" style="font-size:.85rem;color:var(--gray-600);font-weight:600;"></span>
+      </div>
+    </header>
+
+    <div class="page-content">
+
+      <!-- TOP STATS ROW -->
+      <div class="stats-grid stats-grid-4" style="margin-bottom:20px;">
+        <div class="stat-card indigo">
+          <div class="stat-icon">📅</div>
+          <div class="stat-value" id="stat-total-events">0</div>
+          <div class="stat-label">Total Events</div>
+        </div>
+        <div class="stat-card red">
+          <div class="stat-icon">⏳</div>
+          <div class="stat-value" id="stat-pending-events" style="color:var(--danger);">0</div>
+          <div class="stat-label">Pending Approval</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-icon">🌐</div>
+          <div class="stat-value" id="stat-published-events">0</div>
+          <div class="stat-label">Published Events</div>
+        </div>
+        <div class="stat-card blue">
+          <div class="stat-icon">✅</div>
+          <div class="stat-value" id="stat-completed-events">0</div>
+          <div class="stat-label">Completed Events</div>
+        </div>
+      </div>
+
+      <!-- TABS -->
+      <div class="tabs" id="event-tabs">
+        <button class="tab-btn active" data-tab="" onclick="switchTab('')">
+          All Events <span class="tab-count" id="count-all">0</span>
+        </button>
+        <button class="tab-btn" data-tab="pending" onclick="switchTab('pending')">
+          Pending Approval <span class="tab-count" id="count-pending" style="background:var(--warning-bg);color:var(--warning-dark);">0</span>
+        </button>
+        <button class="tab-btn" data-tab="published" onclick="switchTab('published')">
+          Published <span class="tab-count" id="count-published">0</span>
+        </button>
+        <button class="tab-btn" data-tab="upcoming" onclick="switchTab('upcoming')">
+          Upcoming <span class="tab-count" id="count-upcoming">0</span>
+        </button>
+        <button class="tab-btn" data-tab="ongoing" onclick="switchTab('ongoing')">
+          Ongoing <span class="tab-count" id="count-ongoing">0</span>
+        </button>
+        <button class="tab-btn" data-tab="completed" onclick="switchTab('completed')">
+          Completed <span class="tab-count" id="count-completed">0</span>
+        </button>
+        <button class="tab-btn" data-tab="cancelled" onclick="switchTab('cancelled')">
+          Cancelled <span class="tab-count" id="count-cancelled">0</span>
+        </button>
+      </div>
+
+      <!-- MAIN TABLE WRAPPER -->
+      <div class="table-wrapper">
+        <div class="table-header">
+          <h4 id="table-heading">Events Directory</h4>
+          <div class="table-controls">
+            <!-- Search -->
+            <div class="search-input-wrap">
+              <span class="search-icon">🔍</span>
+              <input
+                type="text"
+                id="search-input"
+                class="search-input"
+                placeholder="Search event title..."
+                oninput="handleSearch()"
+              >
+            </div>
+
+            <!-- Category Filter -->
+            <select id="category-filter" class="filter-select" onchange="fetchEvents()">
+              <option value="">All Categories</option>
+            </select>
+
+            <!-- Department Filter -->
+            <select id="department-filter" class="filter-select" onchange="fetchEvents()">
+              <option value="">All Departments</option>
+            </select>
+
+            <button class="btn btn-light btn-sm" onclick="resetFilters()">Reset</button>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Event Info</th>
+                <th>Category</th>
+                <th>Organizer</th>
+                <th>Date & Time</th>
+                <th>Capacity</th>
+                <th>Approval</th>
+                <th>State</th>
+                <th style="text-align:right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="events-tbody">
+              <tr><td colspan="8" style="text-align:center;padding:32px;color:var(--gray-400);">Loading campus events...</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- PAGINATION -->
+        <div class="pagination" id="pagination-container" style="display:none;">
+          <div class="pagination-info" id="pagination-info">Showing 0 of 0 events</div>
+          <div class="pagination-btns" id="pagination-btns"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- VIEW PARTICIPANTS MODAL -->
+<div class="modal-overlay" id="participants-modal" style="display:none;">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <div>
+        <h3 id="modal-event-title" style="margin:0;font-size:1.15rem;">Registered Participants</h3>
+        <div id="modal-event-sub" style="font-size:0.82rem;color:var(--gray-500);margin-top:2px;">Event Participants List</div>
+      </div>
+      <button class="modal-close" onclick="modal.hide('participants-modal')">✕</button>
+    </div>
+    <div class="modal-body" style="padding:0;">
+      <div style="padding:14px 20px;background:var(--gray-50);border-bottom:1px solid var(--gray-200);display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-weight:600;font-size:0.9rem;" id="modal-participants-count">0 Enrolled Students</span>
+        <button class="btn btn-outline btn-sm" onclick="exportParticipantsCSV()">📥 Export List</button>
+      </div>
+      <div id="participants-list-container" style="max-height:360px;overflow-y:auto;">
+        <div style="padding:32px;text-align:center;color:var(--gray-400);">Loading participant records...</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="modal.hide('participants-modal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- REJECTION REASON MODAL -->
+<div class="modal-overlay" id="reject-modal" style="display:none;">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-header">
+      <h3>Reject Event Proposal</h3>
+      <button class="modal-close" onclick="modal.hide('reject-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="color:var(--gray-600);margin-bottom:12px;font-size:0.9rem;">
+        Provide the reason why event <strong id="reject-target-title"></strong> is rejected:
+      </p>
+      <input type="hidden" id="reject-target-id">
+      <div class="form-group">
+        <label class="form-label" for="rejection-reason">Rejection Reason <span class="required">*</span></label>
+        <textarea
+          id="rejection-reason"
+          class="form-control"
+          rows="4"
+          placeholder="e.g. Incomplete safety paperwork, venue scheduling clash with examinations, etc."
+        ></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="modal.hide('reject-modal')">Cancel</button>
+      <button class="btn btn-danger" onclick="confirmEventRejection()">Confirm Rejection</button>
+    </div>
+  </div>
+</div>
+
+<script src="../js/api.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/utils.js"></script>
+<script>
+  let activeTab = '';
+  let currentPage = 1;
+  const pageLimit = 15;
+  let searchTimer = null;
+  let currentLoadedEventRegistrations = [];
+  let currentLoadedEventTitle = '';
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    if (!auth.requireRole('admin', '../admin/login.html')) return;
+    auth.populateSidebarUser();
+    setActiveNavLink();
+    initSidebarToggle();
+
+    // Check URL parameters for tab or search
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabParam = urlParams.get('tab');
+    const searchParam = urlParams.get('search');
+    if (tabParam) {
+      activeTab = tabParam;
+      highlightTab(tabParam);
+    }
+    if (searchParam) {
+      document.getElementById('search-input').value = searchParam;
+    }
+
+    await loadDropdowns();
+    await fetchEvents();
+  });
+
+  function highlightTab(tabName) {
+    document.querySelectorAll('#event-tabs .tab-btn').forEach(btn => {
+      if (btn.getAttribute('data-tab') === tabName) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
+  }
+
+  function switchTab(tab) {
+    activeTab = tab;
+    highlightTab(tab);
+    currentPage = 1;
+    fetchEvents();
+  }
+
+  async function loadDropdowns() {
+    try {
+      const [catsRes, deptsRes] = await Promise.all([
+        api.admin.getCategories(),
+        api.admin.getDepartments()
+      ]);
+
+      const catSelect = document.getElementById('category-filter');
+      (catsRes.data || []).forEach(cat => {
+        const opt = document.createElement('option');
+        opt.value = cat._id;
+        opt.textContent = cat.name;
+        catSelect.appendChild(opt);
+      });
+
+      const deptSelect = document.getElementById('department-filter');
+      (deptsRes.data || []).forEach(dept => {
+        const opt = document.createElement('option');
+        opt.value = dept._id;
+        opt.textContent = `${dept.name} (${dept.code})`;
+        deptSelect.appendChild(opt);
+      });
+    } catch (err) {
+      console.warn('Could not populate filters:', err);
+    }
+  }
+
+  function handleSearch() {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => {
+      currentPage = 1;
+      fetchEvents();
+    }, 350);
+  }
+
+  function resetFilters() {
+    document.getElementById('search-input').value = '';
+    document.getElementById('category-filter').value = '';
+    document.getElementById('department-filter').value = '';
+    currentPage = 1;
+    activeTab = '';
+    highlightTab('');
+    fetchEvents();
+  }
+
+  async function fetchEvents() {
+    loader.show();
+    const search = document.getElementById('search-input').value.trim();
+    const cat = document.getElementById('category-filter').value;
+    const dept = document.getElementById('department-filter').value;
+
+    const params = new URLSearchParams();
+    if (search) params.append('search', search);
+    if (cat) params.append('category', cat);
+    if (dept) params.append('department', dept);
+
+    // Tab mapping: approvalStatus vs eventStatus
+    if (activeTab === 'pending') params.append('approvalStatus', 'pending');
+    else if (activeTab === 'published') params.append('approvalStatus', 'published');
+    else if (activeTab === 'upcoming') params.append('eventStatus', 'upcoming');
+    else if (activeTab === 'ongoing') params.append('eventStatus', 'ongoing');
+    else if (activeTab === 'completed') params.append('eventStatus', 'completed');
+    else if (activeTab === 'cancelled') params.append('eventStatus', 'cancelled');
+
+    params.append('page', currentPage);
+    params.append('limit', pageLimit);
+
+    try {
+      const res = await api.admin.getEvents(`?${params.toString()}`);
+      const events = res.data || [];
+      const total = res.total || 0;
+      const totalPages = res.pages || 1;
+
+      renderEventsTable(events);
+      renderPagination(total, totalPages);
+      updateTopStats();
+    } catch (err) {
+      toast.error('Failed to load events: ' + err.message);
+      document.getElementById('events-tbody').innerHTML = `
+        <tr><td colspan="8" style="text-align:center;color:var(--danger);padding:24px;">Failed to load events.</td></tr>
+      `;
+    } finally {
+      loader.hide();
+    }
+  }
+
+  async function updateTopStats() {
+    try {
+      const dashRes = await api.admin.getDashboard();
+      const stats = dashRes.data?.stats || {};
+      document.getElementById('stat-total-events').textContent = (stats.totalEvents || 0).toLocaleString();
+      document.getElementById('stat-pending-events').textContent = (stats.pendingEvents || 0).toLocaleString();
+      document.getElementById('stat-published-events').textContent = (stats.upcomingEvents || 0).toLocaleString();
+      document.getElementById('stat-completed-events').textContent = (stats.completedEvents || 0).toLocaleString();
+
+      document.getElementById('count-all').textContent = stats.totalEvents || 0;
+      document.getElementById('count-pending').textContent = stats.pendingEvents || 0;
+      document.getElementById('count-published').textContent = stats.upcomingEvents || 0;
+      document.getElementById('count-upcoming').textContent = stats.upcomingEvents || 0;
+      document.getElementById('count-ongoing').textContent = stats.ongoingEvents || 0;
+      document.getElementById('count-completed').textContent = stats.completedEvents || 0;
+      document.getElementById('count-cancelled').textContent = stats.cancelledEvents || 0;
+    } catch (e) {
+      // Ignore count fetch errors
+    }
+  }
+
+  function renderEventsTable(events) {
+    const tbody = document.getElementById('events-tbody');
+    if (!events || events.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="8">
+            ${emptyState('📅', 'No Events Found', 'No events correspond to this view or filter criteria.')}
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    tbody.innerHTML = events.map(evt => {
+      const cat = evt.categoryId || {};
+      const catColor = cat.color || '#4f46e5';
+      const catName = cat.name || 'General';
+      const organizer = evt.clubId?.name || evt.departmentId?.name || evt.hostId?.name || 'Campus Host';
+      const current = evt.currentRegistrations || 0;
+      const max = evt.maxParticipants || 100;
+      const venueStr = [evt.building, evt.room].filter(Boolean).join(' - ') || 'Campus Venue';
+      const isPending = evt.approvalStatus === 'pending';
+      const isCancelled = evt.eventStatus === 'cancelled';
+
+      const imgSrc = evt.image ? imgUrl(evt.image) : '';
+      const imgMarkup = imgSrc
+        ? `<img src="${imgSrc}" class="event-thumb" alt="thumbnail" onerror="this.outerHTML='<div class=\'event-thumb\' style=\'display:flex;align-items:center;justify-content:center;font-size:1.2rem;\'>🎉</div>'">`
+        : `<div class="event-thumb" style="display:flex;align-items:center;justify-content:center;font-size:1.2rem;">🎉</div>`;
+
+      return `
+        <tr>
+          <td>
+            <div style="display:flex;align-items:center;gap:12px;">
+              ${imgMarkup}
+              <div>
+                <div style="font-weight:700;color:var(--gray-900);">${escapeHtml(evt.title)}</div>
+                <div style="font-size:0.75rem;color:var(--gray-500);display:flex;align-items:center;gap:4px;">
+                  📍 ${escapeHtml(venueStr)}
+                </div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <span class="badge" style="background:${catColor}15;color:${catColor};border:1px solid ${catColor}30;">
+              ${escapeHtml(catName)}
+            </span>
+          </td>
+          <td>
+            <div style="font-size:0.85rem;font-weight:600;">${escapeHtml(organizer)}</div>
+            <div style="font-size:0.75rem;color:var(--gray-400);">${escapeHtml(evt.hostId?.email || '')}</div>
+          </td>
+          <td>
+            <div style="font-size:0.85rem;font-weight:500;">${fmt.shortDate(evt.date)}</div>
+            <div style="font-size:0.75rem;color:var(--gray-400);">${evt.startTime || ''} - ${evt.endTime || ''}</div>
+          </td>
+          <td style="min-width:130px;">
+            ${progressBar(current, max)}
+          </td>
+          <td>
+            ${badge.approvalStatus(evt.approvalStatus)}
+          </td>
+          <td>
+            ${badge.eventStatus(evt.eventStatus)}
+          </td>
+          <td style="text-align:right;">
+            <div style="display:inline-flex;gap:6px;align-items:center;">
+              ${isPending ? `
+                <button class="btn btn-success btn-sm" onclick="approveEvent('${evt._id}', '${escapeHtml(evt.title)}')">
+                  Approve
+                </button>
+                <button class="btn btn-outline-danger btn-sm" onclick="openRejectDialog('${evt._id}', '${escapeHtml(evt.title)}')">
+                  Reject
+                </button>
+              ` : ''}
+
+              <button class="btn btn-outline btn-sm" onclick="viewParticipants('${evt._id}', '${escapeHtml(evt.title)}')">
+                Participants
+              </button>
+
+              ${!isCancelled && evt.eventStatus !== 'completed' ? `
+                <button class="btn btn-ghost btn-sm" style="color:var(--warning-dark);" onclick="cancelEvent('${evt._id}', '${escapeHtml(evt.title)}')" title="Cancel Event">
+                  Cancel
+                </button>
+              ` : ''}
+
+              <button class="btn btn-ghost btn-sm" style="color:var(--danger);" onclick="deleteEvent('${evt._id}', '${escapeHtml(evt.title)}')" title="Delete Event">
+                🗑️
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function renderPagination(total, totalPages) {
+    const container = document.getElementById('pagination-container');
+    const info = document.getElementById('pagination-info');
+    const btns = document.getElementById('pagination-btns');
+
+    if (total === 0) {
+      container.style.display = 'none';
+      return;
+    }
+
+    container.style.display = 'flex';
+    const start = (currentPage - 1) * pageLimit + 1;
+    const end = Math.min(currentPage * pageLimit, total);
+    info.textContent = `Showing ${start} - ${end} of ${total} events`;
+
+    btns.innerHTML = '';
+
+    const prevBtn = document.createElement('button');
+    prevBtn.className = 'page-btn';
+    prevBtn.textContent = '‹';
+    prevBtn.disabled = currentPage === 1;
+    prevBtn.onclick = () => { if (currentPage > 1) { currentPage--; fetchEvents(); } };
+    btns.appendChild(prevBtn);
+
+    for (let p = 1; p <= totalPages; p++) {
+      if (p === 1 || p === totalPages || (p >= currentPage - 2 && p <= currentPage + 2)) {
+        const pBtn = document.createElement('button');
+        pBtn.className = `page-btn ${p === currentPage ? 'active' : ''}`;
+        pBtn.textContent = p;
+        pBtn.onclick = () => { currentPage = p; fetchEvents(); };
+        btns.appendChild(pBtn);
+      } else if (p === currentPage - 3 || p === currentPage + 3) {
+        const dot = document.createElement('span');
+        dot.textContent = '...';
+        dot.style.padding = '0 4px';
+        dot.style.color = 'var(--gray-400)';
+        btns.appendChild(dot);
+      }
+    }
+
+    const nextBtn = document.createElement('button');
+    nextBtn.className = 'page-btn';
+    nextBtn.textContent = '›';
+    nextBtn.disabled = currentPage === totalPages;
+    nextBtn.onclick = () => { if (currentPage < totalPages) { currentPage++; fetchEvents(); } };
+    btns.appendChild(nextBtn);
+  }
+
+  // Action: Approve
+  async function approveEvent(id, title) {
+    const ok = await modal.confirm({
+      title: 'Approve & Publish Event',
+      message: `Approve "${title}"? It will be immediately published to all students on the campus portal.`,
+      confirmText: 'Approve & Publish',
+      type: 'success'
+    });
+    if (!ok) return;
+
+    loader.show();
+    try {
+      await api.admin.updateEventStatus(id, { approvalStatus: 'approved' });
+      toast.success(`Event "${title}" has been approved!`);
+      await fetchEvents();
+    } catch (err) {
+      toast.error('Failed to approve event: ' + err.message);
+    } finally {
+      loader.hide();
+    }
+  }
+
+  // Action: Reject
+  function openRejectDialog(id, title) {
+    document.getElementById('reject-target-id').value = id;
+    document.getElementById('reject-target-title').textContent = title;
+    document.getElementById('rejection-reason').value = '';
+    modal.show('reject-modal');
+  }
+
+  async function confirmEventRejection() {
+    const id = document.getElementById('reject-target-id').value;
+    const reason = document.getElementById('rejection-reason').value.trim();
+
+    if (!reason) {
+      toast.warning('Please enter a rejection reason for the host.');
+      return;
+    }
+
+    modal.hide('reject-modal');
+    loader.show();
+    try {
+      await api.admin.updateEventStatus(id, {
+        approvalStatus: 'rejected',
+        rejectionReason: reason
+      });
+      toast.success('Event rejected and host notified.');
+      await fetchEvents();
+    } catch (err) {
+      toast.error('Failed to reject event: ' + err.message);
+    } finally {
+      loader.hide();
+    }
+  }
+
+  // Action: Cancel
+  async function cancelEvent(id, title) {
+    const ok = await modal.confirm({
+      title: 'Cancel Event',
+      message: `Are you sure you want to cancel "${title}"? Registered participants will see this marked as Cancelled.`,
+      confirmText: 'Cancel Event',
+      type: 'danger'
+    });
+    if (!ok) return;
+
+    loader.show();
+    try {
+      await api.admin.updateEventStatus(id, { eventStatus: 'cancelled' });
+      toast.success(`Event "${title}" has been cancelled.`);
+      await fetchEvents();
+    } catch (err) {
+      toast.error('Failed to cancel event: ' + err.message);
+    } finally {
+      loader.hide();
+    }
+  }
+
+  // Action: Delete
+  async function deleteEvent(id, title) {
+    const ok = await modal.confirm({
+      title: 'Delete Event Permanently',
+      message: `Permanently delete "${title}" and all its participant registrations? This cannot be undone.`,
+      confirmText: 'Delete Permanently',
+      type: 'danger'
+    });
+    if (!ok) return;
+
+    loader.show();
+    try {
+      await api.admin.deleteEvent(id);
+      toast.success(`Event deleted successfully.`);
+      await fetchEvents();
+    } catch (err) {
+      toast.error('Failed to delete event: ' + err.message);
+    } finally {
+      loader.hide();
+    }
+  }
+
+  // Action: View Participants
+  async function viewParticipants(id, title) {
+    currentLoadedEventTitle = title;
+    currentLoadedEventRegistrations = [];
+    loader.show();
+    try {
+      const res = await api.admin.getEvent(id);
+      const data = res.data || {};
+      const regs = data.registrations || [];
+      currentLoadedEventRegistrations = regs;
+
+      document.getElementById('modal-event-title').textContent = title;
+      document.getElementById('modal-event-sub').textContent = `Scheduled for ${fmt.date(data.event?.date)} • Venue: ${data.event?.building || 'Campus'}`;
+      document.getElementById('modal-participants-count').textContent = `${regs.length} Enrolled Student${regs.length === 1 ? '' : 's'}`;
+
+      const container = document.getElementById('participants-list-container');
+      if (regs.length === 0) {
+        container.innerHTML = `<div style="padding:40px;text-align:center;color:var(--gray-400);">No students have registered for this event yet.</div>`;
+      } else {
+        container.innerHTML = regs.map((reg, idx) => {
+          const student = reg.studentId || {};
+          return `
+            <div class="participant-row">
+              <div style="display:flex;align-items:center;gap:12px;">
+                <span style="font-size:0.8rem;color:var(--gray-400);width:20px;">#${idx + 1}</span>
+                ${avatarInitials(student.name, 32)}
+                <div>
+                  <div style="font-weight:600;font-size:0.88rem;color:var(--gray-900);">${escapeHtml(student.name || 'Student')}</div>
+                  <div style="font-size:0.75rem;color:var(--gray-500);">${escapeHtml(student.email || '')}</div>
+                </div>
+              </div>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <span style="font-size:0.78rem;color:var(--gray-500);">${fmt.shortDate(reg.registeredAt || reg.createdAt)}</span>
+                ${badge.attendanceStatus(reg.attendanceStatus || 'not-marked')}
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      modal.show('participants-modal');
+    } catch (err) {
+      toast.error('Failed to load participants: ' + err.message);
+    } finally {
+      loader.hide();
+    }
+  }
+
+  function exportParticipantsCSV() {
+    if (!currentLoadedEventRegistrations || currentLoadedEventRegistrations.length === 0) {
+      toast.warning('No participant data to export.');
+      return;
+    }
+
+    const headers = ['#', 'Name', 'Email', 'Registered Date', 'Attendance Status'];
+    const rows = currentLoadedEventRegistrations.map((reg, i) => [
+      i + 1,
+      `"${(reg.studentId?.name || '').replace(/"/g, '""')}"`,
+      `"${(reg.studentId?.email || '').replace(/"/g, '""')}"`,
+      `"${fmt.dateTime(reg.registeredAt || reg.createdAt)}"`,
+      `"${reg.attendanceStatus || 'not-marked'}"`
+    ]);
+
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `${currentLoadedEventTitle.replace(/[^a-z0-9]/gi, '_')}_participants.csv`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    toast.success('Participant roster exported!');
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>"']/g, m => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    })[m]);
+  }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - Campus Event Manager</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    .pending-alert-banner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: linear-gradient(90deg, #fffbeb, #fef3c7);
+      border: 1px solid #fde68a;
+      border-radius: var(--border-radius);
+      padding: 14px 20px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow-sm);
+    }
+    .pending-alert-content {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .pending-alert-icon {
+      font-size: 1.5rem;
+    }
+    .pending-alert-text h4 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #92400e;
+      margin-bottom: 2px;
+    }
+    .pending-alert-text p {
+      font-size: 0.82rem;
+      color: #b45309;
+      margin: 0;
+    }
+    .action-badge-btn {
+      padding: 4px 10px;
+      font-size: 0.75rem;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    .action-badge-btn.approve {
+      background: var(--success-bg);
+      color: var(--success-dark);
+      border: 1px solid #a7f3d0;
+    }
+    .action-badge-btn.approve:hover {
+      background: var(--success);
+      color: #fff;
+    }
+    .action-badge-btn.reject {
+      background: var(--danger-bg);
+      color: var(--danger-dark);
+      border: 1px solid #fecaca;
+    }
+    .action-badge-btn.reject:hover {
+      background: var(--danger);
+      color: #fff;
+    }
+    .popular-item {
+      padding: 12px 0;
+      border-bottom: 1px solid var(--gray-100);
+    }
+    .popular-item:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+    .popular-title {
+      font-weight: 600;
+      font-size: 0.88rem;
+      color: var(--gray-900);
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+  </style>
+</head>
+<body>
+
+<div class="dashboard-layout">
+  <div class="sidebar-overlay" onclick="document.querySelector('.sidebar').classList.remove('open');this.classList.remove('visible')"></div>
+  
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-icon">🎓</div>
+      <div class="sidebar-brand-text">
+        <div class="brand-name">CampusEvents</div>
+        <div class="brand-role">Admin Portal</div>
+      </div>
+    </div>
+    
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Main</div>
+      <ul class="sidebar-nav">
+        <li><a href="dashboard.html"><span class="nav-icon">🏠</span> Dashboard</a></li>
+        <li><a href="events.html"><span class="nav-icon">📅</span> Events</a></li>
+        <li><a href="students.html"><span class="nav-icon">👥</span> Students</a></li>
+        <li><a href="hosts.html"><span class="nav-icon">👔</span> Hosts</a></li>
+        <li><a href="departments.html"><span class="nav-icon">🏛️</span> Departments</a></li>
+        <li><a href="clubs.html"><span class="nav-icon">🎯</span> Clubs</a></li>
+        <li><a href="categories.html"><span class="nav-icon">🏷️</span> Categories</a></li>
+        <li><a href="analytics.html"><span class="nav-icon">📊</span> Analytics</a></li>
+      </ul>
+    </div>
+    
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">System</div>
+      <ul class="sidebar-nav">
+        <li><a href="settings.html"><span class="nav-icon">⚙️</span> Settings</a></li>
+      </ul>
+    </div>
+    
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="sidebar-user-avatar" id="sidebar-user-avatar">A</div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name" id="sidebar-user-name">Admin</div>
+          <div class="sidebar-user-role" id="sidebar-user-role">admin</div>
+        </div>
+      </div>
+      <button class="btn btn-ghost w-full" style="color:#94a3b8;margin-top:8px" onclick="auth.logoutRole('admin')">Logout</button>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <div class="main-content">
+    <header class="topbar">
+      <button class="topbar-menu-btn" id="sidebar-toggle">☰</button>
+      <div>
+        <div class="topbar-title">Dashboard Overview</div>
+        <div class="topbar-subtitle">System statistics, approval queues, and real-time activity</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-light btn-sm" onclick="loadDashboardData()" title="Refresh Dashboard">🔄 Refresh</button>
+        <span id="topbar-user-name" style="font-size:.85rem;color:var(--gray-600);font-weight:600;"></span>
+      </div>
+    </header>
+
+    <div class="page-content">
+      
+      <!-- PENDING ALERTS -->
+      <div id="pending-events-banner" class="pending-alert-banner" style="display:none;">
+        <div class="pending-alert-content">
+          <span class="pending-alert-icon">⏳</span>
+          <div class="pending-alert-text">
+            <h4>Events Pending Approval</h4>
+            <p id="pending-events-text">There are events waiting for administrator review.</p>
+          </div>
+        </div>
+        <a href="events.html?tab=pending" class="btn btn-warning btn-sm">Review Events</a>
+      </div>
+
+      <div id="pending-hosts-banner" class="pending-alert-banner" style="display:none;background:linear-gradient(90deg, #eff6ff, #dbeafe);border-color:#bfdbfe;">
+        <div class="pending-alert-content">
+          <span class="pending-alert-icon">👔</span>
+          <div class="pending-alert-text">
+            <h4 style="color:#1e40af;">Host Accounts Pending Verification</h4>
+            <p id="pending-hosts-text" style="color:#2563eb;">New hosts submitted verification details.</p>
+          </div>
+        </div>
+        <a href="hosts.html?tab=pending" class="btn btn-primary btn-sm">Review Hosts</a>
+      </div>
+
+      <!-- 8 STAT CARDS GRID -->
+      <div class="stats-grid stats-grid-4">
+        <!-- Total Students -->
+        <div class="stat-card indigo">
+          <div class="stat-icon">👥</div>
+          <div class="stat-value" id="stat-total-students">-</div>
+          <div class="stat-label">Total Active Students</div>
+        </div>
+
+        <!-- Total Hosts -->
+        <div class="stat-card purple">
+          <div class="stat-icon">👔</div>
+          <div class="stat-value" id="stat-total-hosts">-</div>
+          <div class="stat-label">Verified Event Hosts</div>
+        </div>
+
+        <!-- Total Events -->
+        <div class="stat-card teal">
+          <div class="stat-icon">📅</div>
+          <div class="stat-value" id="stat-total-events">-</div>
+          <div class="stat-label">Total Events</div>
+        </div>
+
+        <!-- Pending Events -->
+        <div class="stat-card red">
+          <div class="stat-icon">⏳</div>
+          <div class="stat-value" id="stat-pending-events" style="color:var(--danger);">-</div>
+          <div class="stat-label">Pending Event Approvals</div>
+        </div>
+
+        <!-- Upcoming Events -->
+        <div class="stat-card green">
+          <div class="stat-icon">🚀</div>
+          <div class="stat-value" id="stat-upcoming-events">-</div>
+          <div class="stat-label">Upcoming Events</div>
+        </div>
+
+        <!-- Ongoing Events -->
+        <div class="stat-card orange">
+          <div class="stat-icon">🔴</div>
+          <div class="stat-value" id="stat-ongoing-events">-</div>
+          <div class="stat-label">Ongoing Events</div>
+        </div>
+
+        <!-- Total Registrations -->
+        <div class="stat-card pink">
+          <div class="stat-icon">🎟️</div>
+          <div class="stat-value" id="stat-total-registrations">-</div>
+          <div class="stat-label">Total Registrations</div>
+        </div>
+
+        <!-- Pending Host Approvals -->
+        <div class="stat-card orange">
+          <div class="stat-icon">⚠️</div>
+          <div class="stat-value" id="stat-pending-hosts" style="color:var(--warning-dark);">-</div>
+          <div class="stat-label">Pending Host Verifications</div>
+        </div>
+      </div>
+
+      <!-- CHARTS ROW (2 CHARTS) -->
+      <div class="section-grid-equal" style="margin-bottom:24px;">
+        <div class="chart-card">
+          <div class="chart-card-header">
+            <div>
+              <div class="chart-card-title">Events by Category</div>
+              <div class="chart-card-subtitle">Distribution across active event types</div>
+            </div>
+            <span class="badge badge-primary">Category Split</span>
+          </div>
+          <div class="chart-container" style="height:260px;position:relative;">
+            <canvas id="categoryChart"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-card-header">
+            <div>
+              <div class="chart-card-title">Monthly Registrations</div>
+              <div class="chart-card-subtitle">Student registration volume (past 6 months)</div>
+            </div>
+            <span class="badge badge-success">Growth Trend</span>
+          </div>
+          <div class="chart-container" style="height:260px;position:relative;">
+            <canvas id="monthlyRegistrationsChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- MAIN SECTION GRID: RECENT EVENTS & POPULAR EVENTS -->
+      <div class="section-grid">
+        
+        <!-- LEFT: RECENT EVENTS TABLE -->
+        <div class="table-wrapper">
+          <div class="table-header">
+            <h4>Recent Events</h4>
+            <a href="events.html" class="btn btn-ghost btn-sm">View All Events →</a>
+          </div>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>Event Title</th>
+                  <th>Category</th>
+                  <th>Date</th>
+                  <th>Host</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="recent-events-tbody">
+                <tr><td colspan="6" style="text-align:center;padding:24px;color:var(--gray-400);">Loading recent events...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- RIGHT: POPULAR EVENTS -->
+        <div class="card">
+          <div class="card-header">
+            <h4>🔥 Most Popular Events</h4>
+          </div>
+          <div class="card-body" id="popular-events-container">
+            <div style="text-align:center;color:var(--gray-400);padding:20px;">Loading popular events...</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RECENT REGISTRATIONS TABLE -->
+      <div class="table-wrapper" style="margin-top:24px;">
+        <div class="table-header">
+          <h4>Recent Student Registrations</h4>
+          <span class="badge badge-gray" id="registrations-count-badge">Live feed</span>
+        </div>
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Student</th>
+                <th>Event</th>
+                <th>Registered Date</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="recent-registrations-tbody">
+              <tr><td colspan="4" style="text-align:center;padding:24px;color:var(--gray-400);">Loading registrations...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- REJECTION REASON MODAL -->
+<div class="modal-overlay" id="reject-modal" style="display:none;">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-header">
+      <h3>Reject Event</h3>
+      <button class="modal-close" onclick="modal.hide('reject-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="color:var(--gray-600);margin-bottom:12px;font-size:0.9rem;">
+        Please specify a reason for rejecting <strong id="reject-event-title"></strong>. The host will be notified with this message.
+      </p>
+      <input type="hidden" id="reject-event-id">
+      <div class="form-group">
+        <label class="form-label" for="reject-reason">Rejection Reason <span class="required">*</span></label>
+        <textarea id="reject-reason" class="form-control" rows="3" placeholder="e.g. Schedule conflict with University Convocation, or venue not approved."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="modal.hide('reject-modal')">Cancel</button>
+      <button class="btn btn-danger" id="confirm-reject-btn" onclick="submitEventRejection()">Confirm Rejection</button>
+    </div>
+  </div>
+</div>
+
+<script src="../js/api.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/utils.js"></script>
+<script>
+  let categoryChartInstance = null;
+  let registrationsChartInstance = null;
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    if (!auth.requireRole('admin', '../admin/login.html')) return;
+    auth.populateSidebarUser();
+    setActiveNavLink();
+    initSidebarToggle();
+
+    await loadDashboardData();
+  });
+
+  async function loadDashboardData() {
+    loader.show();
+    try {
+      const [dashRes, analyticsRes] = await Promise.all([
+        api.admin.getDashboard(),
+        api.admin.getAnalytics()
+      ]);
+
+      const dash = dashRes.data || {};
+      const stats = dash.stats || {};
+      const recentEvents = dash.recentEvents || [];
+      const recentRegistrations = dash.recentRegistrations || [];
+      const popularEvents = dash.popularEvents || [];
+
+      // 1. Populate Stat Cards
+      document.getElementById('stat-total-students').textContent = (stats.totalStudents ?? 0).toLocaleString();
+      document.getElementById('stat-total-hosts').textContent = (stats.totalHosts ?? 0).toLocaleString();
+      document.getElementById('stat-total-events').textContent = (stats.totalEvents ?? 0).toLocaleString();
+      document.getElementById('stat-pending-events').textContent = (stats.pendingEvents ?? 0).toLocaleString();
+      document.getElementById('stat-upcoming-events').textContent = (stats.upcomingEvents ?? 0).toLocaleString();
+      document.getElementById('stat-ongoing-events').textContent = (stats.ongoingEvents ?? 0).toLocaleString();
+      document.getElementById('stat-total-registrations').textContent = (stats.totalRegistrations ?? 0).toLocaleString();
+      document.getElementById('stat-pending-hosts').textContent = (stats.pendingHosts ?? 0).toLocaleString();
+
+      // 2. Pending alerts
+      const pendingEvtBanner = document.getElementById('pending-events-banner');
+      if (stats.pendingEvents > 0) {
+        document.getElementById('pending-events-text').textContent = `There are ${stats.pendingEvents} event(s) waiting for administrator approval.`;
+        pendingEvtBanner.style.display = 'flex';
+      } else {
+        pendingEvtBanner.style.display = 'none';
+      }
+
+      const pendingHostsBanner = document.getElementById('pending-hosts-banner');
+      if (stats.pendingHosts > 0) {
+        document.getElementById('pending-hosts-text').textContent = `There are ${stats.pendingHosts} host account(s) pending verification.`;
+        pendingHostsBanner.style.display = 'flex';
+      } else {
+        pendingHostsBanner.style.display = 'none';
+      }
+
+      // 3. Render Charts
+      renderCharts(analyticsRes.data || {});
+
+      // 4. Render Recent Events
+      renderRecentEvents(recentEvents);
+
+      // 5. Render Popular Events
+      renderPopularEvents(popularEvents);
+
+      // 6. Render Recent Registrations
+      renderRecentRegistrations(recentRegistrations);
+
+    } catch (err) {
+      toast.error('Failed to load dashboard data: ' + err.message);
+    } finally {
+      loader.hide();
+    }
+  }
+
+  function renderCharts(analytics) {
+    const categoryData = analytics.eventsByCategory || [];
+    const catLabels = categoryData.map(c => c.name || 'Uncategorized');
+    const catCounts = categoryData.map(c => c.count || 0);
+    const catColors = categoryData.map(c => c.color || '#6366f1');
+
+    const catCtx = document.getElementById('categoryChart').getContext('2d');
+    if (categoryChartInstance) categoryChartInstance.destroy();
+
+    if (catLabels.length === 0) {
+      catLabels.push('No Events Yet');
+      catCounts.push(1);
+      catColors.push('#e2e8f0');
+    }
+
+    categoryChartInstance = new Chart(catCtx, {
+      type: 'doughnut',
+      data: {
+        labels: catLabels,
+        datasets: [{
+          data: catCounts,
+          backgroundColor: catColors,
+          borderWidth: 2,
+          borderColor: '#ffffff',
+          hoverOffset: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { boxWidth: 12, font: { family: 'Inter', size: 12 } }
+          }
+        },
+        cutout: '65%'
+      }
+    });
+
+    // Monthly registrations bar chart
+    const regData = analytics.registrationsByMonth || [];
+    const regLabels = regData.map(r => r.month);
+    const regCounts = regData.map(r => r.count);
+
+    const regCtx = document.getElementById('monthlyRegistrationsChart').getContext('2d');
+    if (registrationsChartInstance) registrationsChartInstance.destroy();
+
+    registrationsChartInstance = new Chart(regCtx, {
+      type: 'bar',
+      data: {
+        labels: regLabels.length ? regLabels : ['May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'],
+        datasets: [{
+          label: 'Registrations',
+          data: regCounts.length ? regCounts : [0, 0, 0, 0, 0, 0],
+          backgroundColor: 'rgba(79, 70, 229, 0.85)',
+          borderRadius: 6,
+          borderSkipped: false
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { precision: 0 }
+          },
+          x: {
+            grid: { display: false }
+          }
+        },
+        plugins: {
+          legend: { display: false }
+        }
+      }
+    });
+  }
+
+  function renderRecentEvents(events) {
+    const tbody = document.getElementById('recent-events-tbody');
+    if (!events || events.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6">${emptyState('📅', 'No Events Found', 'There are currently no events in the database.')}</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = events.map(evt => {
+      const catName = evt.categoryId?.name || 'General';
+      const catColor = evt.categoryId?.color || '#4f46e5';
+      const hostName = evt.hostId?.name || 'Faculty / Club';
+      const isPending = evt.approvalStatus === 'pending';
+
+      const quickActions = isPending ? `
+        <div style="display:flex;gap:6px;">
+          <button class="action-badge-btn approve" onclick="quickApproveEvent('${evt._id}', '${escapeHtml(evt.title)}')">Approve</button>
+          <button class="action-badge-btn reject" onclick="openRejectModal('${evt._id}', '${escapeHtml(evt.title)}')">Reject</button>
+        </div>
+      ` : `
+        <a href="events.html?search=${encodeURIComponent(evt.title)}" class="btn btn-ghost btn-sm" style="padding:4px 8px;font-size:0.78rem;">Details</a>
+      `;
+
+      return `
+        <tr>
+          <td>
+            <div style="font-weight:600;color:var(--gray-900);">${escapeHtml(evt.title)}</div>
+            <div style="font-size:0.78rem;color:var(--gray-500);">${evt.departmentId?.name || 'All Campus'}</div>
+          </td>
+          <td>
+            <span class="badge" style="background:${catColor}15;color:${catColor};border:1px solid ${catColor}30;">
+              ${escapeHtml(catName)}
+            </span>
+          </td>
+          <td>
+            <div style="font-size:0.85rem;color:var(--gray-700);">${fmt.shortDate(evt.date)}</div>
+            <div style="font-size:0.75rem;color:var(--gray-400);">${evt.startTime || ''}</div>
+          </td>
+          <td>
+            <span style="font-size:0.85rem;font-weight:500;">${escapeHtml(hostName)}</span>
+          </td>
+          <td>
+            <div style="display:flex;flex-direction:column;gap:3px;">
+              ${badge.approvalStatus(evt.approvalStatus)}
+              ${badge.eventStatus(evt.eventStatus)}
+            </div>
+          </td>
+          <td>
+            ${quickActions}
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function renderPopularEvents(events) {
+    const container = document.getElementById('popular-events-container');
+    if (!events || events.length === 0) {
+      container.innerHTML = emptyState('⭐', 'No Popular Events', 'Published events with registrations will appear here.');
+      return;
+    }
+
+    container.innerHTML = events.map(evt => {
+      const current = evt.currentRegistrations || 0;
+      const max = evt.maxParticipants || 100;
+      return `
+        <div class="popular-item">
+          <div class="popular-title">
+            <span style="text-overflow:ellipsis;overflow:hidden;white-space:nowrap;max-width:180px;">${escapeHtml(evt.title)}</span>
+            <span class="badge badge-primary" style="font-size:0.7rem;">${evt.categoryId?.name || 'Event'}</span>
+          </div>
+          ${progressBar(current, max)}
+          <div style="display:flex;justify-content:space-between;font-size:0.75rem;color:var(--gray-500);margin-top:2px;">
+            <span>📅 ${fmt.shortDate(evt.date)}</span>
+            <span>${max - current > 0 ? (max - current) + ' spots left' : '<span style="color:var(--danger)">Full</span>'}</span>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function renderRecentRegistrations(registrations) {
+    const tbody = document.getElementById('recent-registrations-tbody');
+    if (!registrations || registrations.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="4">${emptyState('🎟️', 'No Registrations Yet', 'Student enrollments will appear here in real-time.')}</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = registrations.map(reg => {
+      const studentName = reg.studentId?.name || 'Student';
+      const studentEmail = reg.studentId?.email || '';
+      const eventTitle = reg.eventId?.title || 'Unknown Event';
+      const eventDate = reg.eventId?.date ? fmt.shortDate(reg.eventId.date) : '';
+
+      return `
+        <tr>
+          <td>
+            <div class="user-cell">
+              ${avatarInitials(studentName, 32)}
+              <div class="user-cell-info">
+                <div class="user-name">${escapeHtml(studentName)}</div>
+                <div class="user-sub">${escapeHtml(studentEmail)}</div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <div style="font-weight:600;color:var(--gray-900);">${escapeHtml(eventTitle)}</div>
+            ${eventDate ? `<div style="font-size:0.75rem;color:var(--gray-400);">Event Date: ${eventDate}</div>` : ''}
+          </td>
+          <td>
+            <div>${fmt.date(reg.registeredAt || reg.createdAt)}</div>
+            <div style="font-size:0.75rem;color:var(--gray-400);">${fmt.relativeTime(reg.registeredAt || reg.createdAt)}</div>
+          </td>
+          <td>
+            ${badge.registrationStatus(reg.status || 'registered')}
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  // Quick Action: Approve Event
+  async function quickApproveEvent(id, title) {
+    const ok = await modal.confirm({
+      title: 'Approve Event',
+      message: `Are you sure you want to approve "${title}"? It will be published for student registrations.`,
+      confirmText: 'Approve & Publish',
+      type: 'success'
+    });
+    if (!ok) return;
+
+    loader.show();
+    try {
+      await api.admin.updateEventStatus(id, { approvalStatus: 'approved' });
+      toast.success(`Event "${title}" has been approved!`);
+      await loadDashboardData();
+    } catch (err) {
+      toast.error('Failed to approve event: ' + err.message);
+    } finally {
+      loader.hide();
+    }
+  }
+
+  // Quick Action: Open Reject Modal
+  function openRejectModal(id, title) {
+    document.getElementById('reject-event-id').value = id;
+    document.getElementById('reject-event-title').textContent = title;
+    document.getElementById('reject-reason').value = '';
+    modal.show('reject-modal');
+  }
+
+  // Submit Event Rejection
+  async function submitEventRejection() {
+    const id = document.getElementById('reject-event-id').value;
+    const reason = document.getElementById('reject-reason').value.trim();
+
+    if (!reason) {
+      toast.warning('Please enter a rejection reason.');
+      return;
+    }
+
+    modal.hide('reject-modal');
+    loader.show();
+    try {
+      await api.admin.updateEventStatus(id, {
+        approvalStatus: 'rejected',
+        rejectionReason: reason
+      });
+      toast.success('Event was rejected and host has been notified.');
+      await loadDashboardData();
+    } catch (err) {
+      toast.error('Failed to reject event: ' + err.message);
+    } finally {
+      loader.hide();
+    }
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>"']/g, m => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    })[m]);
+  }
+</script>
+
+</body>
+</html>

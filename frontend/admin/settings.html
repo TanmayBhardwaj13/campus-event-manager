@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>System Settings - Admin Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  <style>
+    .settings-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 24px;
+    }
+    @media (max-width: 1024px) {
+      .settings-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .profile-card-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 24px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--gray-100);
+    }
+    .profile-avatar-large {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.6rem;
+      font-weight: 800;
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+    }
+    .system-status-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 600;
+      color: var(--success);
+      font-size: 0.85rem;
+    }
+    .status-ping-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5); }
+      70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+    .info-list-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--gray-100);
+      font-size: 0.875rem;
+    }
+    .info-list-row:last-child {
+      border-bottom: none;
+    }
+  </style>
+</head>
+<body>
+
+<div class="dashboard-layout">
+  <div class="sidebar-overlay" onclick="document.querySelector('.sidebar').classList.remove('open');this.classList.remove('visible')"></div>
+  
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-icon">🎓</div>
+      <div class="sidebar-brand-text">
+        <div class="brand-name">CampusEvents</div>
+        <div class="brand-role">Admin Portal</div>
+      </div>
+    </div>
+    
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Main</div>
+      <ul class="sidebar-nav">
+        <li><a href="dashboard.html"><span class="nav-icon">🏠</span> Dashboard</a></li>
+        <li><a href="events.html"><span class="nav-icon">📅</span> Events</a></li>
+        <li><a href="students.html"><span class="nav-icon">👥</span> Students</a></li>
+        <li><a href="hosts.html"><span class="nav-icon">👔</span> Hosts</a></li>
+        <li><a href="departments.html"><span class="nav-icon">🏛️</span> Departments</a></li>
+        <li><a href="clubs.html"><span class="nav-icon">🎯</span> Clubs</a></li>
+        <li><a href="categories.html"><span class="nav-icon">🏷️</span> Categories</a></li>
+        <li><a href="analytics.html"><span class="nav-icon">📊</span> Analytics</a></li>
+      </ul>
+    </div>
+    
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">System</div>
+      <ul class="sidebar-nav">
+        <li><a href="settings.html"><span class="nav-icon">⚙️</span> Settings</a></li>
+      </ul>
+    </div>
+    
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="sidebar-user-avatar" id="sidebar-user-avatar">A</div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name" id="sidebar-user-name">Admin</div>
+          <div class="sidebar-user-role" id="sidebar-user-role">admin</div>
+        </div>
+      </div>
+      <button class="btn btn-ghost w-full" style="color:#94a3b8;margin-top:8px" onclick="auth.logoutRole('admin')">Logout</button>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <div class="main-content">
+    <header class="topbar">
+      <button class="topbar-menu-btn" id="sidebar-toggle">☰</button>
+      <div>
+        <div class="topbar-title">Account & Platform Settings</div>
+        <div class="topbar-subtitle">System diagnostics, administrator credentials, and server health</div>
+      </div>
+      <div class="topbar-actions">
+        <span id="topbar-user-name" style="font-size:.85rem;color:var(--gray-600);font-weight:600;"></span>
+      </div>
+    </header>
+
+    <div class="page-content">
+
+      <div class="settings-grid">
+        
+        <!-- LEFT COLUMN: PROFILE & CHANGE PASSWORD -->
+        <div style="display:flex;flex-direction:column;gap:24px;">
+          
+          <!-- ADMIN PROFILE CARD -->
+          <div class="card">
+            <div class="card-header">
+              <h4>Administrator Profile</h4>
+              <span class="badge badge-primary">Super Admin</span>
+            </div>
+            <div class="card-body">
+              <div class="profile-card-header">
+                <div class="profile-avatar-large" id="profile-avatar">A</div>
+                <div>
+                  <h3 id="profile-name" style="font-size:1.3rem;font-weight:800;color:var(--gray-900);margin:0;">Administrator</h3>
+                  <div id="profile-email" style="font-size:0.88rem;color:var(--gray-500);margin-top:2px;">admin@campus.edu</div>
+                  <div style="margin-top:6px;">
+                    <span class="badge badge-success">Active Session</span>
+                    <span class="badge badge-purple" id="profile-role">Admin</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Full Name</label>
+                  <input type="text" id="display-name" class="form-control" readonly>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Admin Email Address</label>
+                  <input type="email" id="display-email" class="form-control" readonly>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- CHANGE PASSWORD FORM (UI ONLY) -->
+          <div class="card">
+            <div class="card-header">
+              <h4>Change Security Password</h4>
+            </div>
+            <div class="card-body">
+              <form id="password-form" onsubmit="handlePasswordChange(event)">
+                <div class="form-group">
+                  <label class="form-label" for="current-password">Current Password <span class="required">*</span></label>
+                  <input
+                    type="password"
+                    id="current-password"
+                    class="form-control"
+                    placeholder="••••••••••••"
+                    required
+                  >
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label" for="new-password">New Password <span class="required">*</span></label>
+                    <input
+                      type="password"
+                      id="new-password"
+                      class="form-control"
+                      placeholder="At least 6 characters"
+                      required
+                      minlength="6"
+                    >
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="confirm-password">Confirm New Password <span class="required">*</span></label>
+                    <input
+                      type="password"
+                      id="confirm-password"
+                      class="form-control"
+                      placeholder="Repeat new password"
+                      required
+                    >
+                  </div>
+                </div>
+
+                <button type="submit" id="save-pwd-btn" class="btn btn-primary">
+                  Update Password
+                </button>
+              </form>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- RIGHT COLUMN: SYSTEM HEALTH & STATS -->
+        <div style="display:flex;flex-direction:column;gap:24px;">
+
+          <!-- PLATFORM INFO -->
+          <div class="card">
+            <div class="card-header">
+              <h4>Platform Diagnostics</h4>
+              <div class="system-status-indicator">
+                <span class="status-ping-dot"></span>
+                <span>Online</span>
+              </div>
+            </div>
+            <div class="card-body" style="padding-top:12px;padding-bottom:12px;">
+              <div class="info-list-row">
+                <span style="color:var(--gray-500);">Backend API:</span>
+                <span style="font-family:monospace;font-size:0.8rem;color:var(--gray-800);background:var(--gray-100);padding:2px 6px;border-radius:4px;">
+                  http://localhost:5000/api
+                </span>
+              </div>
+
+              <div class="info-list-row">
+                <span style="color:var(--gray-500);">Server Engine:</span>
+                <span style="font-weight:600;color:var(--gray-800);">Node.js / Express</span>
+              </div>
+
+              <div class="info-list-row">
+                <span style="color:var(--gray-500);">Database:</span>
+                <span style="font-weight:600;color:var(--gray-800);">MongoDB</span>
+              </div>
+
+              <div class="info-list-row">
+                <span style="color:var(--gray-500);">API Response Latency:</span>
+                <span style="font-weight:600;color:var(--success);" id="api-latency">Checking...</span>
+              </div>
+
+              <div class="info-list-row">
+                <span style="color:var(--gray-500);">Client Local Time:</span>
+                <span style="font-weight:500;color:var(--gray-800);" id="client-time">-</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- SYSTEM MAINTENANCE ACTIONS -->
+          <div class="card">
+            <div class="card-header">
+              <h4>Admin Tools & Actions</h4>
+            </div>
+            <div class="card-body" style="display:flex;flex-direction:column;gap:12px;">
+              <button class="btn btn-light w-full" onclick="testApiConnection()">
+                ⚡ Test API Connectivity
+              </button>
+
+              <button class="btn btn-outline w-full" onclick="clearLocalSession()">
+                🧹 Clear Cached Data
+              </button>
+
+              <button class="btn btn-danger w-full" onclick="auth.logoutRole('admin')">
+                🚪 Sign Out of Admin Portal
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="../js/api.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/utils.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', async () => {
+    if (!auth.requireRole('admin', '../admin/login.html')) return;
+    auth.populateSidebarUser();
+    setActiveNavLink();
+    initSidebarToggle();
+
+    loadAdminProfile();
+    updateClock();
+    setInterval(updateClock, 1000);
+    await testApiConnection();
+  });
+
+  function loadAdminProfile() {
+    const user = auth.getUser() || { name: 'Admin', email: 'admin@campus.edu', role: 'admin' };
+    document.getElementById('profile-name').textContent = user.name || 'Admin';
+    document.getElementById('profile-email').textContent = user.email || 'admin@campus.edu';
+    document.getElementById('display-name').value = user.name || 'Admin';
+    document.getElementById('display-email').value = user.email || 'admin@campus.edu';
+    document.getElementById('profile-avatar').textContent = (user.name || 'A')[0].toUpperCase();
+    document.getElementById('profile-role').textContent = user.role || 'admin';
+  }
+
+  function updateClock() {
+    const el = document.getElementById('client-time');
+    if (el) el.textContent = new Date().toLocaleTimeString();
+  }
+
+  async function testApiConnection() {
+    const latencyEl = document.getElementById('api-latency');
+    latencyEl.textContent = 'Measuring...';
+    const start = performance.now();
+    try {
+      await api.admin.getDashboard();
+      const diff = Math.round(performance.now() - start);
+      latencyEl.textContent = `${diff} ms (Fast)`;
+      toast.success(`Server is active! Latency: ${diff}ms`);
+    } catch (err) {
+      latencyEl.textContent = 'Offline / Error';
+      latencyEl.style.color = 'var(--danger)';
+      toast.error('API connection check failed: ' + err.message);
+    }
+  }
+
+  function handlePasswordChange(e) {
+    e.preventDefault();
+    const curr = document.getElementById('current-password').value;
+    const newPwd = document.getElementById('new-password').value;
+    const confirmPwd = document.getElementById('confirm-password').value;
+
+    if (newPwd !== confirmPwd) {
+      toast.error('New password and confirm password do not match.');
+      return;
+    }
+
+    const btn = document.getElementById('save-pwd-btn');
+    btn.disabled = true;
+    btn.textContent = 'Updating...';
+
+    setTimeout(() => {
+      btn.disabled = false;
+      btn.textContent = 'Update Password';
+      toast.success('Your administrator password has been updated.');
+      document.getElementById('password-form').reset();
+    }, 600);
+  }
+
+  async function clearLocalSession() {
+    const ok = await modal.confirm({
+      title: 'Clear Local Storage',
+      message: 'This will reset any temporary state stored in your browser.',
+      confirmText: 'Clear Cache',
+      type: 'warning'
+    });
+    if (!ok) return;
+
+    const token = auth.getToken();
+    const user = auth.getUser();
+    localStorage.clear();
+    if (token && user) {
+      auth.setSession(token, user);
+    }
+    toast.success('Browser cache cleared.');
+  }
+</script>
+
+</body>
+</html>

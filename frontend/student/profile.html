@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Profile | Campus Event Manager</title>
+  <meta name="description" content="View and manage your student profile, academic credentials, and personal details.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/utils.js"></script>
+  <style>
+    .profile-layout-container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .profile-hero-card {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      color: #fff;
+      border-radius: var(--border-radius-lg);
+      padding: 32px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      box-shadow: var(--shadow-md);
+      position: relative;
+      overflow: hidden;
+      flex-wrap: wrap;
+    }
+    .profile-hero-card::after {
+      content: '';
+      position: absolute;
+      top: -60px;
+      right: -60px;
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(79, 70, 229, 0.3) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .profile-avatar-wrap {
+      position: relative;
+      width: 90px;
+      height: 90px;
+      flex-shrink: 0;
+    }
+    .profile-avatar-large {
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: #fff;
+      border: 3px solid rgba(255, 255, 255, 0.2);
+      overflow: hidden;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+    }
+    .profile-avatar-large img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .avatar-edit-badge {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      cursor: pointer;
+      border: 2px solid #1e293b;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    }
+    .profile-hero-info {
+      flex: 1;
+      min-width: 240px;
+    }
+    .profile-name {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: #ffffff;
+      margin-bottom: 6px;
+    }
+    .profile-badges {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+    .profile-subtext {
+      font-size: 0.88rem;
+      color: #94a3b8;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .profile-subtext span {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .readonly-box {
+      background: var(--gray-50);
+      border: 1.5px solid var(--gray-200);
+      border-radius: var(--border-radius-sm);
+      padding: 10px 14px;
+      font-size: 0.9rem;
+      color: var(--gray-600);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .file-upload-box {
+      border: 2px dashed var(--gray-300);
+      border-radius: var(--border-radius);
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: var(--transition);
+      background: var(--gray-50);
+    }
+    .file-upload-box:hover {
+      border-color: var(--primary);
+      background: #f8faff;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="sidebar-overlay"></div>
+
+  <div class="dashboard-layout">
+    <!-- STUDENT SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-icon">🎓</div>
+        <div class="sidebar-brand-text">
+          <div class="brand-name">CampusEvents</div>
+          <div class="brand-role">Student Portal</div>
+        </div>
+      </div>
+      <ul class="sidebar-nav" style="padding:12px">
+        <li><a href="dashboard.html"><span class="nav-icon">🏠</span> Dashboard</a></li>
+        <li><a href="events.html"><span class="nav-icon">🔍</span> Discover Events</a></li>
+        <li><a href="my-events.html"><span class="nav-icon">📅</span> My Events</a></li>
+        <li><a href="saved.html"><span class="nav-icon">📌</span> Saved Events</a></li>
+        <li><a href="activity.html"><span class="nav-icon">⏱️</span> Activity</a></li>
+        <li><a href="certificates.html"><span class="nav-icon">🎓</span> Certificates</a></li>
+        <li><a href="notifications.html"><span class="nav-icon">🔔</span> Notifications <span class="nav-badge" id="notif-count" style="display:none">0</span></a></li>
+        <li><a href="profile.html"><span class="nav-icon">👤</span> Profile</a></li>
+      </ul>
+      <div class="sidebar-footer">
+        <div class="sidebar-user">
+          <div class="sidebar-user-avatar" id="sidebar-user-avatar">S</div>
+          <div class="sidebar-user-info">
+            <div class="sidebar-user-name" id="sidebar-user-name">Student</div>
+            <div class="sidebar-user-role" id="sidebar-user-role">student</div>
+          </div>
+        </div>
+        <button class="btn btn-ghost w-full" style="color:#94a3b8;margin-top:8px" onclick="auth.logoutRole('student')">Logout</button>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+      <!-- TOPBAR -->
+      <header class="topbar">
+        <button class="topbar-menu-btn" id="sidebar-toggle" aria-label="Toggle navigation">☰</button>
+        <div>
+          <div class="topbar-title">Student Profile</div>
+          <div class="topbar-subtitle">Academic profile and personal account details</div>
+        </div>
+        <div class="topbar-actions">
+          <a href="notifications.html" class="topbar-icon-btn notif-bell" title="Notifications">
+            🔔
+            <span class="notif-badge" id="topbar-notif-badge" style="display:none">0</span>
+          </a>
+        </div>
+      </header>
+
+      <!-- PAGE CONTENT -->
+      <div class="page-content">
+        <div class="profile-layout-container">
+
+          <!-- Hero Profile Card -->
+          <div class="profile-hero-card">
+            <div class="profile-avatar-wrap">
+              <div class="profile-avatar-large" id="hero-avatar">S</div>
+              <label for="profileImage" class="avatar-edit-badge" title="Change profile photo">📷</label>
+            </div>
+            <div class="profile-hero-info">
+              <div class="profile-name" id="hero-name">Student Name</div>
+              <div class="profile-badges">
+                <span class="badge badge-primary" id="hero-student-id">ID: STU----</span>
+                <span class="badge badge-success" id="hero-dept">Department</span>
+                <span class="badge badge-teal" id="hero-year">Year 1</span>
+                <span class="badge badge-gray">Active Account</span>
+              </div>
+              <div class="profile-subtext">
+                <span id="hero-email">📧 email@student.college.edu</span>
+                <span id="hero-course">📚 Program</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4 Stats Row -->
+          <div class="stats-grid stats-grid-4" style="margin-bottom:28px;">
+            <div class="stat-card indigo">
+              <div class="stat-icon">📅</div>
+              <div class="stat-value" id="prof-stat-registered">0</div>
+              <div class="stat-label">Events Registered</div>
+            </div>
+            <div class="stat-card green">
+              <div class="stat-icon">🎯</div>
+              <div class="stat-value" id="prof-stat-attended">0</div>
+              <div class="stat-label">Events Attended</div>
+            </div>
+            <div class="stat-card orange">
+              <div class="stat-icon">❌</div>
+              <div class="stat-value" id="prof-stat-cancelled">0</div>
+              <div class="stat-label">Registrations Cancelled</div>
+            </div>
+            <div class="stat-card purple">
+              <div class="stat-icon">🎓</div>
+              <div class="stat-value" id="prof-stat-certs">0</div>
+              <div class="stat-label">Certificates Earned</div>
+            </div>
+          </div>
+
+          <!-- Profile Details & Edit Form Card -->
+          <div class="card" style="margin-bottom:32px;">
+            <div class="card-header">
+              <h4>Edit Profile Information</h4>
+              <span class="text-xs text-muted">Update your contact information & academic standing</span>
+            </div>
+            <div class="card-body">
+              <form id="profile-form">
+
+                <!-- Readonly Institutional Details -->
+                <div class="form-row" style="margin-bottom: 20px;">
+                  <div class="form-group" style="margin-bottom:0;">
+                    <label class="form-label">College Email (Institutional ID)</label>
+                    <div class="readonly-box" id="readonly-email">
+                      <span>Loading...</span>
+                      <span class="badge badge-gray">Verified</span>
+                    </div>
+                  </div>
+                  <div class="form-group" style="margin-bottom:0;">
+                    <label class="form-label">Student ID / Roll No</label>
+                    <div class="readonly-box" id="readonly-student-id">
+                      <span>Loading...</span>
+                      <span class="badge badge-gray">Official</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Editable Row 1: Full Name & Phone -->
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="name" class="form-label">Full Name <span class="required">*</span></label>
+                    <input type="text" id="name" name="name" class="form-control" required>
+                  </div>
+                  <div class="form-group">
+                    <label for="phone" class="form-label">Phone Number</label>
+                    <input type="tel" id="phone" name="phone" class="form-control" placeholder="+91 98765 43210">
+                  </div>
+                </div>
+
+                <!-- Editable Row 2: Course & Year -->
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="course" class="form-label">Course / Degree Program <span class="required">*</span></label>
+                    <input type="text" id="course" name="course" class="form-control" placeholder="e.g. B.Tech Computer Science" required>
+                  </div>
+                  <div class="form-group">
+                    <label for="year" class="form-label">Year of Study <span class="required">*</span></label>
+                    <select id="year" name="year" class="form-control" required>
+                      <option value="1">1st Year (Freshman)</option>
+                      <option value="2">2nd Year (Sophomore)</option>
+                      <option value="3">3rd Year (Junior)</option>
+                      <option value="4">4th Year (Senior)</option>
+                      <option value="5">Post Graduate / PhD</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Profile Photo Upload -->
+                <div class="form-group">
+                  <label class="form-label">Profile Photo</label>
+                  <div class="file-upload-box" onclick="document.getElementById('profileImage').click()">
+                    <input type="file" id="profileImage" name="profileImage" accept="image/*" style="display:none;">
+                    <div style="font-size:1.8rem;margin-bottom:4px;">🖼️</div>
+                    <div class="font-semibold text-primary" id="upload-label">Click to upload new avatar image</div>
+                    <div class="text-xs text-muted" style="margin-top:2px;">PNG, JPG, or WEBP (Max 5MB)</div>
+                  </div>
+                  <div id="image-preview-wrap" style="display:none;margin-top:12px;align-items:center;gap:12px;">
+                    <img id="image-preview" src="" alt="Preview" style="width:48px;height:48px;border-radius:50%;object-fit:cover;border:2px solid var(--primary);">
+                    <span class="text-xs text-muted" id="image-name">Selected photo</span>
+                  </div>
+                </div>
+
+                <div style="display:flex;justify-content:flex-end;margin-top:24px;">
+                  <button type="submit" id="save-btn" class="btn btn-gradient btn-lg">
+                    <span id="save-text">Save Changes</span>
+                    <span id="save-spinner" class="spinner" style="width:18px;height:18px;border-width:2px;display:none;margin-left:8px;"></span>
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    let currentProfile = null;
+    let currentUser = null;
+
+    // Load Profile and Statistics
+    async function loadProfile() {
+      try {
+        const res = await api.student.getProfile();
+        currentUser = res.data?.user || {};
+        currentProfile = res.data?.profile || {};
+
+        // Update Hero Card
+        document.getElementById('hero-name').textContent = currentUser.name || 'Student';
+        document.getElementById('hero-email').innerHTML = `📧 ${currentUser.email || ''}`;
+        document.getElementById('hero-student-id').textContent = `ID: ${currentProfile.studentId || 'N/A'}`;
+        document.getElementById('hero-dept').textContent = currentProfile.departmentId?.name || 'General';
+        document.getElementById('hero-year').textContent = `Year ${currentProfile.year || '1'}`;
+        document.getElementById('hero-course').innerHTML = `📚 ${currentProfile.course || 'Degree Program'}`;
+
+        const avatarEl = document.getElementById('hero-avatar');
+        if (currentUser.profileImage) {
+          avatarEl.innerHTML = `<img src="${imgUrl(currentUser.profileImage)}" alt="Avatar" onerror="this.parentElement.textContent='${currentUser.name[0].toUpperCase()}'">`;
+        } else {
+          avatarEl.textContent = currentUser.name ? currentUser.name[0].toUpperCase() : 'S';
+        }
+
+        // Fill Readonly Details
+        document.getElementById('readonly-email').firstElementChild.textContent = currentUser.email || '';
+        document.getElementById('readonly-student-id').firstElementChild.textContent = currentProfile.studentId || '';
+
+        // Fill Form Inputs
+        document.getElementById('name').value = currentUser.name || '';
+        document.getElementById('phone').value = currentProfile.phone || '';
+        document.getElementById('course').value = currentProfile.course || '';
+        if (currentProfile.year) {
+          document.getElementById('year').value = currentProfile.year;
+        }
+
+      } catch (err) {
+        console.error('Failed to load profile:', err);
+        toast.error('Unable to fetch profile details.');
+      }
+
+      // Load Statistics
+      try {
+        const dashRes = await api.student.getDashboard();
+        const stats = dashRes.data?.stats || {};
+        document.getElementById('prof-stat-registered').textContent = stats.registered || 0;
+        document.getElementById('prof-stat-attended').textContent = stats.attended || 0;
+        document.getElementById('prof-stat-cancelled').textContent = stats.cancelled || 0;
+      } catch (e) {}
+
+      try {
+        const certRes = await api.student.getCertificates();
+        document.getElementById('prof-stat-certs').textContent = (certRes.data || []).length;
+      } catch (e) {}
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!auth.requireRole('student', '../student/login.html')) return;
+      auth.populateSidebarUser();
+      setActiveNavLink();
+      initSidebarToggle();
+
+      await loadProfile();
+
+      // Photo upload preview handler
+      const fileInput = document.getElementById('profileImage');
+      const previewWrap = document.getElementById('image-preview-wrap');
+      const previewImg = document.getElementById('image-preview');
+      const previewName = document.getElementById('image-name');
+      const uploadLabel = document.getElementById('upload-label');
+
+      fileInput.addEventListener('change', () => {
+        const file = fileInput.files[0];
+        if (file) {
+          previewWrap.style.display = 'flex';
+          previewName.textContent = file.name;
+          uploadLabel.textContent = `Selected: ${file.name}`;
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            previewImg.src = e.target.result;
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+
+      // Form submission
+      const form = document.getElementById('profile-form');
+      const saveBtn = document.getElementById('save-btn');
+      const saveText = document.getElementById('save-text');
+      const saveSpinner = document.getElementById('save-spinner');
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const name = document.getElementById('name').value.trim();
+        const phone = document.getElementById('phone').value.trim();
+        const course = document.getElementById('course').value.trim();
+        const year = document.getElementById('year').value;
+        const file = fileInput.files[0];
+
+        if (!name || !course || !year) {
+          toast.error('Please enter name, course, and year.');
+          return;
+        }
+
+        saveBtn.disabled = true;
+        saveText.textContent = 'Saving changes...';
+        saveSpinner.style.display = 'inline-block';
+
+        const formData = new FormData();
+        formData.append('name', name);
+        formData.append('phone', phone);
+        formData.append('course', course);
+        formData.append('year', year);
+        if (file) {
+          formData.append('profileImage', file);
+        }
+
+        try {
+          const res = await api.student.updateProfile(formData, true);
+          toast.success(res.message || 'Profile updated successfully!');
+
+          if (res.data?.user) {
+            auth.updateUser({
+              name: res.data.user.name,
+              profileImage: res.data.user.profileImage
+            });
+            auth.populateSidebarUser();
+          }
+
+          await loadProfile();
+        } catch (err) {
+          console.error('Profile update error:', err);
+          toast.error(err.message || 'Failed to update profile.');
+        } finally {
+          saveBtn.disabled = false;
+          saveText.textContent = 'Save Changes';
+          saveSpinner.style.display = 'none';
+        }
+      });
+    });
+  </script>
+</body>
+</html>

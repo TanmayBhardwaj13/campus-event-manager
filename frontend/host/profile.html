@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Host Profile - Campus Event Manager</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/utils.js"></script>
+  <style>
+    .profile-header-card {
+      background: #ffffff;
+      border-radius: var(--border-radius);
+      border: 1px solid var(--gray-200);
+      overflow: hidden;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow-sm);
+    }
+    .profile-cover {
+      height: 140px;
+      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #4338ca 100%);
+      position: relative;
+    }
+    .profile-header-body {
+      padding: 0 28px 24px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 20px;
+      flex-wrap: wrap;
+      position: relative;
+    }
+    .profile-avatar-wrap {
+      margin-top: -50px;
+      display: flex;
+      align-items: flex-end;
+      gap: 20px;
+    }
+    .profile-avatar-large {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+      font-weight: 800;
+      border: 4px solid #fff;
+      box-shadow: var(--shadow-md);
+      flex-shrink: 0;
+    }
+    .profile-main-info {
+      padding-bottom: 6px;
+    }
+    .profile-name {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--gray-900);
+      line-height: 1.2;
+    }
+    .profile-meta-line {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 6px;
+      flex-wrap: wrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar-overlay"></div>
+
+  <div class="dashboard-layout">
+    <!-- HOST SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-icon">🎟️</div>
+        <div class="sidebar-brand-text">
+          <div class="brand-name">CampusEvents</div>
+          <div class="brand-role">Host Portal</div>
+        </div>
+      </div>
+      <ul class="sidebar-nav" style="padding:12px">
+        <li><a href="dashboard.html"><span class="nav-icon">🏠</span> Dashboard</a></li>
+        <li><a href="events.html"><span class="nav-icon">📅</span> My Events</a></li>
+        <li><a href="create-event.html"><span class="nav-icon">➕</span> Create Event</a></li>
+        <li><a href="analytics.html"><span class="nav-icon">📊</span> Analytics</a></li>
+        <li><a href="profile.html"><span class="nav-icon">👤</span> Profile</a></li>
+      </ul>
+      <div class="sidebar-footer">
+        <div class="sidebar-user" onclick="window.location.href='profile.html'">
+          <div class="sidebar-user-avatar" id="sidebar-user-avatar">H</div>
+          <div class="sidebar-user-info">
+            <div class="sidebar-user-name" id="sidebar-user-name">Host</div>
+            <div class="sidebar-user-role" id="sidebar-user-role">host</div>
+          </div>
+        </div>
+        <button class="btn btn-ghost w-full" style="color:#94a3b8;margin-top:8px" onclick="auth.logoutRole('host')">Logout</button>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+      <!-- TOPBAR -->
+      <header class="topbar">
+        <button class="topbar-menu-btn" id="sidebar-toggle" aria-label="Toggle navigation menu">☰</button>
+        <div>
+          <div class="topbar-title">Host Profile & Account</div>
+          <div class="topbar-subtitle">Manage organization affiliations and verification details</div>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn btn-primary btn-sm" onclick="document.getElementById('edit-profile-section').scrollIntoView({behavior:'smooth'})">
+            ✏️ Edit Profile
+          </button>
+        </div>
+      </header>
+
+      <!-- PAGE CONTENT -->
+      <div class="page-content" style="max-width: 960px; margin: 0 auto;">
+        <!-- VERIFICATION STATUS ALERT -->
+        <div id="status-alert-container" style="margin-bottom: 24px;"></div>
+
+        <!-- PROFILE HEADER CARD -->
+        <div class="profile-header-card">
+          <div class="profile-cover"></div>
+          <div class="profile-header-body">
+            <div class="profile-avatar-wrap">
+              <div class="profile-avatar-large" id="profile-avatar">H</div>
+              <div class="profile-main-info">
+                <h1 class="profile-name" id="profile-name-text">Loading Host...</h1>
+                <div class="profile-meta-line">
+                  <span class="badge badge-purple" id="badge-host-type">Host Type</span>
+                  <span id="badge-verification-status"></span>
+                  <span style="font-size: 0.85rem; color: var(--gray-500);" id="profile-email-text">-</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3 STATS CARDS -->
+        <div class="stats-grid-3 stats-grid" style="margin-bottom: 24px;">
+          <div class="stat-card purple">
+            <div class="stat-icon">📅</div>
+            <div class="stat-value" id="profile-stat-events">0</div>
+            <div class="stat-label">Events Created</div>
+          </div>
+          <div class="stat-card blue">
+            <div class="stat-icon">👥</div>
+            <div class="stat-value" id="profile-stat-registrations">0</div>
+            <div class="stat-label">Registrations Managed</div>
+          </div>
+          <div class="stat-card green">
+            <div class="stat-icon">🗓️</div>
+            <div class="stat-value" id="profile-stat-since">-</div>
+            <div class="stat-label">Member Since</div>
+          </div>
+        </div>
+
+        <!-- TWO COLUMN DETAILS & EDIT FORM -->
+        <div class="section-grid-equal">
+          <!-- LEFT: DETAILS CARD -->
+          <div class="card">
+            <div class="card-header">
+              <h4 style="font-size: 1.05rem; font-weight: 700;">Host Information</h4>
+            </div>
+            <div class="card-body">
+              <div style="display:flex; flex-direction:column; gap:16px;">
+                <div>
+                  <div style="font-size:0.75rem; text-transform:uppercase; color:var(--gray-400); font-weight:700; letter-spacing:0.05em;">College Email</div>
+                  <div style="font-weight:600; color:var(--gray-900); font-size:0.95rem; margin-top:2px;" id="disp-email">-</div>
+                </div>
+
+                <div>
+                  <div style="font-size:0.75rem; text-transform:uppercase; color:var(--gray-400); font-weight:700; letter-spacing:0.05em;">Academic Department</div>
+                  <div style="font-weight:600; color:var(--gray-900); font-size:0.95rem; margin-top:2px;" id="disp-dept">-</div>
+                </div>
+
+                <div>
+                  <div style="font-size:0.75rem; text-transform:uppercase; color:var(--gray-400); font-weight:700; letter-spacing:0.05em;">Club / Society Affiliation</div>
+                  <div style="font-weight:600; color:var(--gray-900); font-size:0.95rem; margin-top:2px;" id="disp-club">-</div>
+                </div>
+
+                <div>
+                  <div style="font-size:0.75rem; text-transform:uppercase; color:var(--gray-400); font-weight:700; letter-spacing:0.05em;">Official Designation / Title</div>
+                  <div style="font-weight:600; color:var(--gray-900); font-size:0.95rem; margin-top:2px;" id="disp-designation">-</div>
+                </div>
+
+                <div>
+                  <div style="font-size:0.75rem; text-transform:uppercase; color:var(--gray-400); font-weight:700; letter-spacing:0.05em;">Contact Phone</div>
+                  <div style="font-weight:600; color:var(--gray-900); font-size:0.95rem; margin-top:2px;" id="disp-phone">-</div>
+                </div>
+
+                <div>
+                  <div style="font-size:0.75rem; text-transform:uppercase; color:var(--gray-400); font-weight:700; letter-spacing:0.05em;">About / Bio</div>
+                  <p style="font-size:0.875rem; color:var(--gray-600); line-height:1.6; margin-top:4px;" id="disp-description">
+                    No description provided.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT: EDIT FORM -->
+          <div class="card" id="edit-profile-section">
+            <div class="card-header">
+              <h4 style="font-size: 1.05rem; font-weight: 700;">Edit Profile Details</h4>
+            </div>
+            <div class="card-body">
+              <form id="profile-edit-form">
+                <div class="form-group">
+                  <label class="form-label" for="edit-name">Full Name <span class="required">*</span></label>
+                  <input type="text" id="edit-name" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="edit-designation">Designation / Role Title</label>
+                  <input type="text" id="edit-designation" class="form-control" placeholder="e.g. Associate Professor / Lead Organizer">
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="edit-phone">Contact Phone</label>
+                  <input type="tel" id="edit-phone" class="form-control" placeholder="+91 98765 43210">
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="edit-description">About / Organization Bio</label>
+                  <textarea id="edit-description" class="form-control" rows="4" placeholder="Describe the mission, department goals, or events your organization hosts..."></textarea>
+                </div>
+
+                <button type="submit" id="save-profile-btn" class="btn btn-primary w-full">
+                  <span>Save Changes</span>
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    let userData = null;
+    let profileData = null;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!auth.requireRole('host', '../host/login.html')) return;
+      auth.populateSidebarUser();
+      setActiveNavLink();
+      initSidebarToggle();
+      await loadProfileData();
+
+      document.getElementById('profile-edit-form').addEventListener('submit', handleProfileUpdate);
+    });
+
+    async function loadProfileData() {
+      loader.show();
+      try {
+        const [meRes, dashRes] = await Promise.all([
+          api.auth.getMe(),
+          api.host.getDashboard().catch(() => null)
+        ]);
+        loader.hide();
+
+        if (meRes.success) {
+          userData = meRes.user;
+          profileData = meRes.profile || {};
+
+          renderProfile(userData, profileData);
+        }
+
+        // Stats
+        if (dashRes && dashRes.data) {
+          const stats = dashRes.data.stats || {};
+          document.getElementById('profile-stat-events').textContent = stats.total ?? 0;
+          document.getElementById('profile-stat-registrations').textContent = stats.totalRegistrations ?? 0;
+        }
+
+        if (userData?.createdAt) {
+          document.getElementById('profile-stat-since').textContent = fmt.shortDate(userData.createdAt);
+        }
+      } catch (err) {
+        loader.hide();
+        toast.error('Failed to load host profile: ' + err.message);
+      }
+    }
+
+    function renderProfile(user, profile) {
+      // Header
+      document.getElementById('profile-name-text').textContent = user.name;
+      document.getElementById('profile-email-text').textContent = user.email;
+      document.getElementById('profile-avatar').textContent = user.name ? user.name[0].toUpperCase() : 'H';
+
+      // Host Type & Verification Status Badges
+      const hostType = profile.hostType ? profile.hostType.toUpperCase() : 'HOST';
+      document.getElementById('badge-host-type').textContent = hostType;
+      document.getElementById('badge-verification-status').innerHTML = badge.hostStatus(profile.verificationStatus || 'pending');
+
+      // Status Banner
+      const statusAlert = document.getElementById('status-alert-container');
+      const vStatus = profile.verificationStatus || 'pending';
+
+      if (vStatus === 'pending') {
+        statusAlert.innerHTML = `
+          <div class="alert alert-warning">
+            <div class="alert-icon">⏳</div>
+            <div class="alert-content">
+              <h5>Your Host Account is Pending Admin Approval</h5>
+              <p>You can draft events, but you cannot publish them until a college administrator approves your account verification.</p>
+            </div>
+          </div>
+        `;
+      } else if (vStatus === 'rejected') {
+        statusAlert.innerHTML = `
+          <div class="alert alert-danger">
+            <div class="alert-icon">❌</div>
+            <div class="alert-content">
+              <h5>Account Rejected</h5>
+              <p>Your host verification was declined. Please reach out to the college administrative staff to update credentials.</p>
+            </div>
+          </div>
+        `;
+      } else if (vStatus === 'approved') {
+        statusAlert.innerHTML = `
+          <div class="alert alert-success">
+            <div class="alert-icon">✅</div>
+            <div class="alert-content">
+              <h5>Verified Host Account</h5>
+              <p>Your account is verified and fully authorized to create, publish, and host campus events.</p>
+            </div>
+          </div>
+        `;
+      }
+
+      // Details Card
+      document.getElementById('disp-email').textContent = user.email;
+      document.getElementById('disp-dept').textContent = profile.departmentId?.name || 'Not Assigned';
+      document.getElementById('disp-club').textContent = profile.clubId?.name || 'None / Departmental Lead';
+      document.getElementById('disp-designation').textContent = profile.designation || 'Event Organizer';
+      document.getElementById('disp-phone').textContent = profile.phone || 'Not Provided';
+      document.getElementById('disp-description').textContent = profile.description || 'No description provided.';
+
+      // Form inputs
+      document.getElementById('edit-name').value = user.name || '';
+      document.getElementById('edit-designation').value = profile.designation || '';
+      document.getElementById('edit-phone').value = profile.phone || '';
+      document.getElementById('edit-description').value = profile.description || '';
+    }
+
+    async function handleProfileUpdate(e) {
+      e.preventDefault();
+
+      const name = document.getElementById('edit-name').value.trim();
+      const designation = document.getElementById('edit-designation').value.trim();
+      const phone = document.getElementById('edit-phone').value.trim();
+      const description = document.getElementById('edit-description').value.trim();
+
+      if (!name) {
+        toast.warning('Name is required.');
+        return;
+      }
+
+      loader.show();
+      try {
+        const payload = { name, designation, phone, description };
+        const res = await api.host.updateProfile(payload);
+        loader.hide();
+
+        if (res.success) {
+          toast.success(res.message || 'Profile updated successfully!');
+          auth.updateUser({ name });
+          auth.populateSidebarUser();
+          await loadProfileData();
+        } else {
+          throw new Error(res.message || 'Failed to update profile');
+        }
+      } catch (err) {
+        loader.hide();
+        toast.error('Error saving profile: ' + err.message);
+      }
+    }
+  </script>
+</body>
+</html>

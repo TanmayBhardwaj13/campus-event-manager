@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Departments - Admin Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  <style>
+    .dept-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+    @media (max-width: 1024px) {
+      .dept-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 640px) {
+      .dept-grid { grid-template-columns: 1fr; }
+    }
+    .dept-card {
+      background: #fff;
+      border-radius: var(--border-radius);
+      border: 1px solid var(--gray-200);
+      padding: 22px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      transition: all 0.25s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .dept-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-md);
+      border-color: #c7d2fe;
+    }
+    .dept-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary), #818cf8);
+    }
+    .dept-card.inactive::before {
+      background: var(--gray-300);
+    }
+    .dept-code-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      background: #eef2ff;
+      color: var(--primary);
+      font-weight: 800;
+      font-size: 0.8rem;
+      border-radius: 6px;
+      letter-spacing: 0.05em;
+    }
+    .dept-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--gray-900);
+      margin: 12px 0 6px;
+    }
+    .dept-desc {
+      font-size: 0.85rem;
+      color: var(--gray-500);
+      line-height: 1.5;
+      flex: 1;
+      margin-bottom: 18px;
+    }
+    .dept-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid var(--gray-100);
+      padding-top: 14px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="dashboard-layout">
+  <div class="sidebar-overlay" onclick="document.querySelector('.sidebar').classList.remove('open');this.classList.remove('visible')"></div>
+  
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-icon">🎓</div>
+      <div class="sidebar-brand-text">
+        <div class="brand-name">CampusEvents</div>
+        <div class="brand-role">Admin Portal</div>
+      </div>
+    </div>
+    
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Main</div>
+      <ul class="sidebar-nav">
+        <li><a href="dashboard.html"><span class="nav-icon">🏠</span> Dashboard</a></li>
+        <li><a href="events.html"><span class="nav-icon">📅</span> Events</a></li>
+        <li><a href="students.html"><span class="nav-icon">👥</span> Students</a></li>
+        <li><a href="hosts.html"><span class="nav-icon">👔</span> Hosts</a></li>
+        <li><a href="departments.html"><span class="nav-icon">🏛️</span> Departments</a></li>
+        <li><a href="clubs.html"><span class="nav-icon">🎯</span> Clubs</a></li>
+        <li><a href="categories.html"><span class="nav-icon">🏷️</span> Categories</a></li>
+        <li><a href="analytics.html"><span class="nav-icon">📊</span> Analytics</a></li>
+      </ul>
+    </div>
+    
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">System</div>
+      <ul class="sidebar-nav">
+        <li><a href="settings.html"><span class="nav-icon">⚙️</span> Settings</a></li>
+      </ul>
+    </div>
+    
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="sidebar-user-avatar" id="sidebar-user-avatar">A</div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name" id="sidebar-user-name">Admin</div>
+          <div class="sidebar-user-role" id="sidebar-user-role">admin</div>
+        </div>
+      </div>
+      <button class="btn btn-ghost w-full" style="color:#94a3b8;margin-top:8px" onclick="auth.logoutRole('admin')">Logout</button>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <div class="main-content">
+    <header class="topbar">
+      <button class="topbar-menu-btn" id="sidebar-toggle">☰</button>
+      <div>
+        <div class="topbar-title">Academic Departments</div>
+        <div class="topbar-subtitle">Configure university departments, codes, and faculties</div>
+      </div>
+      <div class="topbar-actions">
+        <span id="topbar-user-name" style="font-size:.85rem;color:var(--gray-600);font-weight:600;"></span>
+      </div>
+    </header>
+
+    <div class="page-content">
+
+      <!-- PAGE HEADER WITH ACTIONS -->
+      <div class="page-header">
+        <div class="page-header-left">
+          <h2>Department Directory</h2>
+          <p>Organize academic units and faculties hosting events across campus</p>
+        </div>
+        <div class="page-header-actions">
+          <div class="search-input-wrap">
+            <span class="search-icon">🔍</span>
+            <input
+              type="text"
+              id="search-input"
+              class="search-input"
+              placeholder="Search department or code..."
+              oninput="handleSearch()"
+            >
+          </div>
+          <button class="btn btn-primary" onclick="openAddModal()">
+            <span>➕</span> Add Department
+          </button>
+        </div>
+      </div>
+
+      <!-- DEPARTMENTS GRID (3 COLUMNS) -->
+      <div class="dept-grid" id="departments-grid">
+        <div style="grid-column:1/-1;text-align:center;padding:48px;color:var(--gray-400);">Loading departments...</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ADD / EDIT DEPARTMENT MODAL -->
+<div class="modal-overlay" id="dept-modal" style="display:none;">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-header">
+      <h3 id="modal-dept-title">Add New Department</h3>
+      <button class="modal-close" onclick="modal.hide('dept-modal')">✕</button>
+    </div>
+    <form id="dept-form" onsubmit="handleDeptSubmit(event)">
+      <div class="modal-body">
+        <input type="hidden" id="dept-id">
+        
+        <div class="form-group">
+          <label class="form-label" for="dept-name">Department Name <span class="required">*</span></label>
+          <input
+            type="text"
+            id="dept-name"
+            class="form-control"
+            placeholder="e.g. Computer Science & Engineering"
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="dept-code">Department Code <span class="required">*</span></label>
+          <input
+            type="text"
+            id="dept-code"
+            class="form-control"
+            placeholder="e.g. CSE"
+            style="text-transform:uppercase;"
+            required
+            maxlength="10"
+          >
+          <span class="form-help">Unique short code in capital letters</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="dept-desc">Description</label>
+          <textarea
+            id="dept-desc"
+            class="form-control"
+            rows="3"
+            placeholder="Brief description of the department..."
+          ></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="dept-status">Status</label>
+          <select id="dept-status" class="form-control">
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" onclick="modal.hide('dept-modal')">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="save-dept-btn">Save Department</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="../js/api.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/utils.js"></script>
+<script>
+  let departments = [];
+  let isEditing = false;
+  let searchTimer = null;
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    if (!auth.requireRole('admin', '../admin/login.html')) return;
+    auth.populateSidebarUser();
+    setActiveNavLink();
+    initSidebarToggle();
+
+    await loadDepartments();
+  });
+
+  async function loadDepartments() {
+    loader.show();
+    try {
+      const res = await api.admin.getDepartments();
+      departments = res.data || [];
+      renderDepartments(departments);
+    } catch (err) {
+      toast.error('Failed to load departments: ' + err.message);
+      document.getElementById('departments-grid').innerHTML = `
+        <div style="grid-column:1/-1;text-align:center;color:var(--danger);padding:32px;">Failed to load departments.</div>
+      `;
+    } finally {
+      loader.hide();
+    }
+  }
+
+  function handleSearch() {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => {
+      const q = document.getElementById('search-input').value.toLowerCase().trim();
+      const filtered = departments.filter(d => 
+        (d.name || '').toLowerCase().includes(q) ||
+        (d.code || '').toLowerCase().includes(q) ||
+        (d.description || '').toLowerCase().includes(q)
+      );
+      renderDepartments(filtered);
+    }, 200);
+  }
+
+  function renderDepartments(items) {
+    const grid = document.getElementById('departments-grid');
+    if (!items || items.length === 0) {
+      grid.innerHTML = `
+        <div style="grid-column:1/-1;">
+          ${emptyState('🏛️', 'No Departments Found', 'Click "Add Department" to create your first campus department.')}
+        </div>
+      `;
+      return;
+    }
+
+    grid.innerHTML = items.map(dept => {
+      const isInactive = dept.status === 'inactive';
+      return `
+        <div class="dept-card ${isInactive ? 'inactive' : ''}">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+            <span class="dept-code-badge">${escapeHtml(dept.code)}</span>
+            ${badge.accountStatus(dept.status || 'active')}
+          </div>
+
+          <h3 class="dept-title">${escapeHtml(dept.name)}</h3>
+          <p class="dept-desc">${escapeHtml(dept.description || 'No description entered for this department.')}</p>
+
+          <div class="dept-footer">
+            <span style="font-size:0.75rem;color:var(--gray-400);">Added: ${fmt.shortDate(dept.createdAt)}</span>
+            <div style="display:flex;gap:6px;">
+              <button class="btn btn-outline btn-sm" onclick="openEditModal('${dept._id}')" title="Edit department">
+                Edit
+              </button>
+              <button class="btn btn-ghost btn-sm" style="color:var(--danger);" onclick="deleteDepartment('${dept._id}', '${escapeHtml(dept.name)}')" title="Delete department">
+                🗑️
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function openAddModal() {
+    isEditing = false;
+    document.getElementById('modal-dept-title').textContent = 'Add New Department';
+    document.getElementById('dept-id').value = '';
+    document.getElementById('dept-name').value = '';
+    document.getElementById('dept-code').value = '';
+    document.getElementById('dept-desc').value = '';
+    document.getElementById('dept-status').value = 'active';
+    modal.show('dept-modal');
+  }
+
+  function openEditModal(id) {
+    const dept = departments.find(d => d._id === id);
+    if (!dept) return;
+
+    isEditing = true;
+    document.getElementById('modal-dept-title').textContent = 'Edit Department';
+    document.getElementById('dept-id').value = dept._id;
+    document.getElementById('dept-name').value = dept.name;
+    document.getElementById('dept-code').value = dept.code;
+    document.getElementById('dept-desc').value = dept.description || '';
+    document.getElementById('dept-status').value = dept.status || 'active';
+    modal.show('dept-modal');
+  }
+
+  async function handleDeptSubmit(e) {
+    e.preventDefault();
+    const id = document.getElementById('dept-id').value;
+    const name = document.getElementById('dept-name').value.trim();
+    const code = document.getElementById('dept-code').value.trim().toUpperCase();
+    const description = document.getElementById('dept-desc').value.trim();
+    const status = document.getElementById('dept-status').value;
+
+    const saveBtn = document.getElementById('save-dept-btn');
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Saving...';
+
+    try {
+      if (isEditing && id) {
+        await api.admin.updateDepartment(id, { name, code, description, status });
+        toast.success(`Department "${name}" updated successfully.`);
+      } else {
+        await api.admin.createDepartment({ name, code, description, status });
+        toast.success(`Department "${name}" created successfully.`);
+      }
+      modal.hide('dept-modal');
+      await loadDepartments();
+    } catch (err) {
+      toast.error('Failed to save department: ' + err.message);
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Save Department';
+    }
+  }
+
+  async function deleteDepartment(id, name) {
+    const ok = await modal.confirm({
+      title: 'Delete Department',
+      message: `Are you sure you want to delete "${name}"? This could affect associated courses and events.`,
+      confirmText: 'Delete Department',
+      type: 'danger'
+    });
+    if (!ok) return;
+
+    loader.show();
+    try {
+      await api.admin.deleteDepartment(id);
+      toast.success(`Department "${name}" deleted.`);
+      await loadDepartments();
+    } catch (err) {
+      toast.error('Failed to delete department: ' + err.message);
+    } finally {
+      loader.hide();
+    }
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>"']/g, m => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    })[m]);
+  }
+</script>
+
+</body>
+</html>

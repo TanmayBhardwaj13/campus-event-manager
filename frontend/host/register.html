@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Host Registration - Campus Event Manager</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/utils.js"></script>
+  <style>
+    body {
+      background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 16px;
+    }
+    .register-container {
+      width: 100%;
+      max-width: 680px;
+    }
+    .brand-header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .brand-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 16px;
+      background: #ffffff;
+      border-radius: 999px;
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 12px;
+    }
+    .brand-badge-icon {
+      font-size: 1.2rem;
+    }
+    .brand-badge-text {
+      font-weight: 800;
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      color: var(--gray-900);
+    }
+    .register-card {
+      background: #ffffff;
+      border-radius: var(--border-radius-lg);
+      border: 1px solid var(--gray-200);
+      box-shadow: var(--shadow-lg);
+      padding: 36px;
+      position: relative;
+      overflow: hidden;
+    }
+    .register-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary), var(--accent));
+    }
+    .form-section-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--gray-800);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 24px;
+      margin-bottom: 14px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--gray-100);
+    }
+    .form-section-title:first-of-type {
+      margin-top: 0;
+    }
+    .form-section-title .section-num {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--primary-bg);
+      color: var(--primary);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+    .register-help {
+      background: #f8fafc;
+      border: 1px dashed var(--gray-300);
+      border-radius: var(--border-radius-sm);
+      padding: 12px 16px;
+      margin-top: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.85rem;
+      color: var(--gray-600);
+    }
+    .success-panel {
+      display: none;
+      text-align: center;
+      padding: 40px 20px;
+    }
+    .success-icon {
+      width: 72px;
+      height: 72px;
+      background: var(--success-bg);
+      color: var(--success);
+      font-size: 2.2rem;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+      animation: popIn 0.3s ease;
+    }
+    @keyframes popIn {
+      0% { transform: scale(0.6); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+  <div class="register-container">
+    <div class="brand-header">
+      <div class="brand-badge">
+        <span class="brand-badge-icon">🎟️</span>
+        <span class="brand-badge-text">CampusEvents</span>
+        <span class="badge badge-primary">Host Registration</span>
+      </div>
+      <h1 style="font-size: 1.75rem; margin-bottom: 6px;">Register as Event Host</h1>
+      <p style="color: var(--gray-500); font-size: 0.95rem;">Join faculty, departments, and student organizations hosting campus events.</p>
+    </div>
+
+    <div class="register-card">
+      <!-- Success State -->
+      <div id="success-panel" class="success-panel">
+        <div class="success-icon">✓</div>
+        <h2 style="font-size: 1.5rem; font-weight: 800; color: var(--gray-900); margin-bottom: 8px;">Registration Submitted!</h2>
+        <p style="color: var(--gray-600); margin-bottom: 20px; line-height: 1.5;">
+          Your host registration has been sent to college administrators. Once approved, you can log in and start publishing events.
+        </p>
+        <div class="alert alert-success" style="max-width: 440px; margin: 0 auto 24px;">
+          <div class="alert-icon">⏳</div>
+          <div class="alert-content">
+            <p><strong>Status: Pending Verification</strong><br>Redirecting to host login in <span id="countdown">3</span> seconds...</p>
+          </div>
+        </div>
+        <a href="login.html" class="btn btn-primary">Go to Host Login Now</a>
+      </div>
+
+      <!-- Registration Form -->
+      <form id="host-register-form">
+        <div id="register-error" class="alert alert-danger" style="display:none; margin-bottom: 20px;">
+          <div class="alert-icon">⚠️</div>
+          <div class="alert-content" id="register-error-text"></div>
+        </div>
+
+        <!-- Section 1: Personal Info -->
+        <div class="form-section-title">
+          <span class="section-num">1</span> Personal Information
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="name">Full Name <span class="required">*</span></label>
+            <input type="text" id="name" class="form-control" placeholder="Dr. Sarah Johnson / Alex Kumar" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="email">College Email <span class="required">*</span></label>
+            <input type="email" id="email" class="form-control" placeholder="sarah.johnson@college.edu" required>
+            <div class="form-help">Must be an authorized institutional email.</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="phone">Phone Number <span class="required">*</span></label>
+          <input type="tel" id="phone" class="form-control" placeholder="+91 98765 43210" required>
+        </div>
+
+        <!-- Section 2: Account Security -->
+        <div class="form-section-title">
+          <span class="section-num">2</span> Account Security
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="password">Password <span class="required">*</span></label>
+            <input type="password" id="password" class="form-control" placeholder="Min. 6 characters" required minlength="6">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="confirmPassword">Confirm Password <span class="required">*</span></label>
+            <input type="password" id="confirmPassword" class="form-control" placeholder="Re-enter password" required minlength="6">
+          </div>
+        </div>
+
+        <!-- Section 3: Role Info -->
+        <div class="form-section-title">
+          <span class="section-num">3</span> Organization & Host Role
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="hostType">Host Type <span class="required">*</span></label>
+            <select id="hostType" class="form-control" required>
+              <option value="">Select Host Type...</option>
+              <option value="faculty">Faculty Member</option>
+              <option value="department">Academic Department</option>
+              <option value="club">Student Club</option>
+              <option value="society">Academic Society</option>
+              <option value="committee">Campus Committee</option>
+              <option value="student">Student Lead / Representative</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="departmentId">Department <span class="required">*</span></label>
+            <select id="departmentId" class="form-control" required>
+              <option value="">Loading departments...</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="clubId">Club / Organization Name</label>
+            <select id="clubId" class="form-control">
+              <option value="">None / Not Club Affiliated</option>
+            </select>
+            <div class="form-help">Select if representing an approved campus club.</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="designation">Designation / Role Title <span class="required">*</span></label>
+            <input type="text" id="designation" class="form-control" placeholder="e.g. Associate Professor / Club President" required>
+          </div>
+        </div>
+
+        <!-- Section 4: About -->
+        <div class="form-section-title">
+          <span class="section-num">4</span> About the Host
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="description">Organization / Bio Description</label>
+          <textarea id="description" class="form-control" rows="3" placeholder="Briefly describe the purpose of your club, department activities, or typical events you organize..."></textarea>
+        </div>
+
+        <div class="register-help">
+          <span style="font-size: 1.2rem;">🛡️</span>
+          <span><strong>Note:</strong> All new host registrations are reviewed and verified by college administrators to ensure safety and policy compliance before granting event publishing privileges.</span>
+        </div>
+
+        <button type="submit" id="submit-btn" class="btn btn-primary w-full btn-lg" style="margin-top: 24px;">
+          <span>Submit Registration</span>
+        </button>
+
+        <div style="text-align: center; margin-top: 20px;">
+          <span style="color: var(--gray-600); font-size: 0.9rem;">Already have a verified account?</span>
+          <a href="login.html" style="color: var(--primary); font-weight: 700; margin-left: 6px;">Sign In Here</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Load departments and clubs
+      await loadMetadata();
+
+      const form = document.getElementById('host-register-form');
+      const errorBox = document.getElementById('register-error');
+      const errorText = document.getElementById('register-error-text');
+      const submitBtn = document.getElementById('submit-btn');
+      const successPanel = document.getElementById('success-panel');
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        errorBox.style.display = 'none';
+
+        const name = document.getElementById('name').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const phone = document.getElementById('phone').value.trim();
+        const password = document.getElementById('password').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+        const hostType = document.getElementById('hostType').value;
+        const departmentId = document.getElementById('departmentId').value;
+        const clubId = document.getElementById('clubId').value;
+        const designation = document.getElementById('designation').value.trim();
+        const description = document.getElementById('description').value.trim();
+
+        if (password !== confirmPassword) {
+          errorText.textContent = 'Passwords do not match. Please verify both password fields.';
+          errorBox.style.display = 'flex';
+          return;
+        }
+
+        if (password.length < 6) {
+          errorText.textContent = 'Password must be at least 6 characters long.';
+          errorBox.style.display = 'flex';
+          return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span>Submitting Registration...</span>';
+        loader.show();
+
+        try {
+          const payload = {
+            name,
+            email,
+            password,
+            phone,
+            hostType,
+            departmentId: departmentId || null,
+            clubId: clubId || null,
+            designation,
+            description,
+          };
+
+          const res = await api.auth.registerHost(payload);
+          loader.hide();
+
+          if (res.success) {
+            form.style.display = 'none';
+            successPanel.style.display = 'block';
+            toast.success(res.message || 'Registration submitted for approval!');
+
+            let count = 3;
+            const cdEl = document.getElementById('countdown');
+            const timer = setInterval(() => {
+              count--;
+              if (cdEl) cdEl.textContent = count;
+              if (count <= 0) {
+                clearInterval(timer);
+                window.location.href = 'login.html';
+              }
+            }, 1000);
+          } else {
+            throw new Error(res.message || 'Registration failed');
+          }
+        } catch (err) {
+          loader.hide();
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<span>Submit Registration</span>';
+          errorText.textContent = err.message || 'Registration error. Please check your inputs.';
+          errorBox.style.display = 'flex';
+          toast.error(err.message || 'Registration failed');
+        }
+      });
+    });
+
+    async function loadMetadata() {
+      const deptSelect = document.getElementById('departmentId');
+      const clubSelect = document.getElementById('clubId');
+
+      try {
+        const [deptsRes, clubsRes] = await Promise.all([
+          api.public.getDepartments().catch(() => ({ success: false })),
+          api.public.getClubs().catch(() => ({ success: false }))
+        ]);
+
+        // Departments
+        deptSelect.innerHTML = '<option value="">Select Department...</option>';
+        if (deptsRes.success && Array.isArray(deptsRes.data)) {
+          deptsRes.data.forEach(d => {
+            const opt = document.createElement('option');
+            opt.value = d._id;
+            opt.textContent = d.name + (d.code ? ` (${d.code})` : '');
+            deptSelect.appendChild(opt);
+          });
+        }
+
+        // Clubs
+        if (clubsRes.success && Array.isArray(clubsRes.data)) {
+          clubsRes.data.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c._id;
+            opt.textContent = c.name;
+            clubSelect.appendChild(opt);
+          });
+        }
+      } catch (err) {
+        console.error('Failed to load departments or clubs', err);
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Registration | Campus Event Manager</title>
+  <meta name="description" content="Register for a Campus Event Manager student account to join campus events, hackathons, and clubs.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/utils.js"></script>
+  <style>
+    body {
+      background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 16px;
+    }
+    .register-container {
+      width: 100%;
+      max-width: 640px;
+      margin: 0 auto;
+    }
+    .register-card {
+      background: #ffffff;
+      border-radius: var(--border-radius-lg);
+      border: 1px solid var(--gray-200);
+      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.08);
+      padding: 36px 32px;
+    }
+    .register-header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    .register-brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .register-brand-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35);
+    }
+    .register-brand-text {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--gray-900);
+      font-family: var(--font-display);
+    }
+    .register-header h1 {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: var(--gray-900);
+      margin-bottom: 6px;
+    }
+    .register-header p {
+      font-size: 0.9rem;
+      color: var(--gray-500);
+    }
+    .input-hint {
+      font-size: 0.76rem;
+      color: var(--gray-400);
+      margin-top: 4px;
+    }
+    .password-field-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .toggle-pass-btn {
+      position: absolute;
+      right: 12px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--gray-400);
+      font-size: 1.05rem;
+      padding: 4px;
+    }
+    .terms-box {
+      background: var(--gray-50);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--border-radius-sm);
+      padding: 12px 14px;
+      font-size: 0.82rem;
+      color: var(--gray-600);
+      margin-bottom: 22px;
+      line-height: 1.45;
+    }
+    .terms-box a {
+      color: var(--primary);
+      text-decoration: underline;
+    }
+    @media (max-width: 640px) {
+      .register-card {
+        padding: 24px 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="register-container">
+    <div style="margin-bottom: 16px;">
+      <a href="../index.html" class="btn btn-ghost btn-sm" style="color:var(--gray-600)">
+        <span>&larr;</span> Back to Home
+      </a>
+    </div>
+
+    <div class="register-card">
+      <div class="register-header">
+        <div class="register-brand">
+          <div class="register-brand-icon">🎓</div>
+          <div class="register-brand-text">CampusEvents</div>
+        </div>
+        <h1>Create Student Account</h1>
+        <p>Join thousands of students discovering and participating in campus life</p>
+      </div>
+
+      <form id="register-form">
+        <!-- Row 1: Full Name & Student ID -->
+        <div class="form-row">
+          <div class="form-group">
+            <label for="name" class="form-label">Full Name <span class="required">*</span></label>
+            <input 
+              type="text" 
+              id="name" 
+              name="name" 
+              class="form-control" 
+              placeholder="e.g. Alex Morgan" 
+              required
+            >
+          </div>
+          <div class="form-group">
+            <label for="studentId" class="form-label">Student ID / Roll No <span class="required">*</span></label>
+            <input 
+              type="text" 
+              id="studentId" 
+              name="studentId" 
+              class="form-control" 
+              placeholder="e.g. STU2024042" 
+              required
+            >
+            <div class="input-hint">Unique institutional ID assigned by college</div>
+          </div>
+        </div>
+
+        <!-- Row 2: College Email & Phone -->
+        <div class="form-row">
+          <div class="form-group">
+            <label for="email" class="form-label">College Email <span class="required">*</span></label>
+            <input 
+              type="email" 
+              id="email" 
+              name="email" 
+              class="form-control" 
+              placeholder="alex@student.college.edu" 
+              required
+            >
+          </div>
+          <div class="form-group">
+            <label for="phone" class="form-label">Phone Number</label>
+            <input 
+              type="tel" 
+              id="phone" 
+              name="phone" 
+              class="form-control" 
+              placeholder="+91 98765 43210"
+            >
+          </div>
+        </div>
+
+        <!-- Row 3: Password & Confirm Password -->
+        <div class="form-row">
+          <div class="form-group">
+            <label for="password" class="form-label">Password <span class="required">*</span></label>
+            <div class="password-field-wrap">
+              <input 
+                type="password" 
+                id="password" 
+                name="password" 
+                class="form-control" 
+                placeholder="Min 6 characters" 
+                minlength="6" 
+                required
+                style="padding-right: 40px;"
+              >
+              <button type="button" class="toggle-pass-btn" data-target="password" aria-label="Toggle password">👁️</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="confirmPassword" class="form-label">Confirm Password <span class="required">*</span></label>
+            <div class="password-field-wrap">
+              <input 
+                type="password" 
+                id="confirmPassword" 
+                name="confirmPassword" 
+                class="form-control" 
+                placeholder="Re-enter password" 
+                minlength="6" 
+                required
+                style="padding-right: 40px;"
+              >
+              <button type="button" class="toggle-pass-btn" data-target="confirmPassword" aria-label="Toggle password">👁️</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 4: Department & Course -->
+        <div class="form-row">
+          <div class="form-group">
+            <label for="departmentId" class="form-label">Department <span class="required">*</span></label>
+            <select id="departmentId" name="departmentId" class="form-control" required>
+              <option value="">Loading departments...</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="course" class="form-label">Course / Program <span class="required">*</span></label>
+            <input 
+              type="text" 
+              id="course" 
+              name="course" 
+              class="form-control" 
+              placeholder="e.g. B.Tech Computer Science" 
+              required
+            >
+          </div>
+        </div>
+
+        <!-- Row 5: Year of Study -->
+        <div class="form-group">
+          <label for="year" class="form-label">Academic Year <span class="required">*</span></label>
+          <select id="year" name="year" class="form-control" required>
+            <option value="">Select current year</option>
+            <option value="1">1st Year (Freshman)</option>
+            <option value="2">2nd Year (Sophomore)</option>
+            <option value="3">3rd Year (Junior)</option>
+            <option value="4">4th Year (Senior)</option>
+            <option value="5">Post Graduate / PhD</option>
+          </select>
+        </div>
+
+        <!-- Terms note -->
+        <div class="terms-box">
+          By clicking <strong>Create Account</strong>, you agree to abide by the Campus Event Manager Terms of Use, Honor Code, and event attendance guidelines.
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" id="submit-btn" class="btn btn-gradient btn-lg w-full mb-4">
+          <span id="btn-text">Create Account</span>
+          <span id="btn-spinner" class="spinner" style="width:20px;height:20px;border-width:2px;display:none;margin-left:8px;"></span>
+        </button>
+
+        <div class="text-center" style="font-size:0.9rem; color:var(--gray-600)">
+          Already have an account? 
+          <a href="login.html" class="text-primary font-semibold hover-underline">Login here</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      // If already logged in, redirect
+      if (auth.isLoggedIn() && auth.getRole() === 'student') {
+        window.location.href = 'dashboard.html';
+        return;
+      }
+
+      const form = document.getElementById('register-form');
+      const deptSelect = document.getElementById('departmentId');
+      const submitBtn = document.getElementById('submit-btn');
+      const btnText = document.getElementById('btn-text');
+      const btnSpinner = document.getElementById('btn-spinner');
+
+      // Load departments dynamically
+      try {
+        const res = await api.public.getDepartments();
+        deptSelect.innerHTML = '<option value="">Select your Department</option>';
+        if (res && res.data && res.data.length > 0) {
+          res.data.forEach(d => {
+            const opt = document.createElement('option');
+            opt.value = d._id;
+            opt.textContent = `${d.name} (${d.code || ''})`.trim();
+            deptSelect.appendChild(opt);
+          });
+        } else {
+          deptSelect.innerHTML = '<option value="">General Studies / Other</option>';
+        }
+      } catch (err) {
+        console.warn('Failed to load departments from API, providing standard options:', err);
+        deptSelect.innerHTML = `
+          <option value="">Select Department</option>
+          <option value="dept_cse">Computer Science & Engineering</option>
+          <option value="dept_ece">Electronics & Communication</option>
+          <option value="dept_me">Mechanical Engineering</option>
+          <option value="dept_mgmt">School of Management</option>
+          <option value="dept_arts">Arts & Humanities</option>
+        `;
+      }
+
+      // Password toggle helpers
+      document.querySelectorAll('.toggle-pass-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const targetId = btn.getAttribute('data-target');
+          const input = document.getElementById(targetId);
+          if (input) {
+            const isPass = input.getAttribute('type') === 'password';
+            input.setAttribute('type', isPass ? 'text' : 'password');
+            btn.textContent = isPass ? '🙈' : '👁️';
+          }
+        });
+      });
+
+      // Submit listener
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const name = document.getElementById('name').value.trim();
+        const studentId = document.getElementById('studentId').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const phone = document.getElementById('phone').value.trim();
+        const password = document.getElementById('password').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+        const departmentId = document.getElementById('departmentId').value;
+        const course = document.getElementById('course').value.trim();
+        const year = document.getElementById('year').value;
+
+        // Validation
+        if (!name || !studentId || !email || !password || !course || !year) {
+          toast.error('Please fill in all required fields.');
+          return;
+        }
+
+        if (password.length < 6) {
+          toast.error('Password must be at least 6 characters.');
+          return;
+        }
+
+        if (password !== confirmPassword) {
+          toast.error('Passwords do not match. Please re-enter.');
+          document.getElementById('confirmPassword').focus();
+          return;
+        }
+
+        submitBtn.disabled = true;
+        btnText.textContent = 'Creating account...';
+        btnSpinner.style.display = 'inline-block';
+
+        const payload = {
+          name,
+          studentId,
+          email,
+          phone,
+          password,
+          departmentId: departmentId || undefined,
+          course,
+          year: parseInt(year, 10) || year
+        };
+
+        try {
+          const res = await api.auth.registerStudent(payload);
+          if (res && (res.success || res.token)) {
+            toast.success('Registration successful! Welcome to CampusEvents.');
+            setTimeout(() => {
+              window.location.href = 'login.html';
+            }, 1500);
+          } else {
+            throw new Error(res.message || 'Registration failed.');
+          }
+        } catch (err) {
+          console.error('Registration error:', err);
+          toast.error(err.message || 'Registration failed. Email or Student ID may already exist.');
+          submitBtn.disabled = false;
+          btnText.textContent = 'Create Account';
+          btnSpinner.style.display = 'none';
+        }
+      });
+    });
+  </script>
+</body>
+</html>

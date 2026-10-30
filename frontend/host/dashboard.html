@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Host Dashboard - Campus Event Manager</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/utils.js"></script>
+</head>
+<body>
+  <div class="sidebar-overlay"></div>
+
+  <div class="dashboard-layout">
+    <!-- HOST SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-icon">🎟️</div>
+        <div class="sidebar-brand-text">
+          <div class="brand-name">CampusEvents</div>
+          <div class="brand-role">Host Portal</div>
+        </div>
+      </div>
+      <ul class="sidebar-nav" style="padding:12px">
+        <li><a href="dashboard.html"><span class="nav-icon">🏠</span> Dashboard</a></li>
+        <li><a href="events.html"><span class="nav-icon">📅</span> My Events</a></li>
+        <li><a href="create-event.html"><span class="nav-icon">➕</span> Create Event</a></li>
+        <li><a href="analytics.html"><span class="nav-icon">📊</span> Analytics</a></li>
+        <li><a href="profile.html"><span class="nav-icon">👤</span> Profile</a></li>
+      </ul>
+      <div class="sidebar-footer">
+        <div class="sidebar-user" onclick="window.location.href='profile.html'">
+          <div class="sidebar-user-avatar" id="sidebar-user-avatar">H</div>
+          <div class="sidebar-user-info">
+            <div class="sidebar-user-name" id="sidebar-user-name">Host</div>
+            <div class="sidebar-user-role" id="sidebar-user-role">host</div>
+          </div>
+        </div>
+        <button class="btn btn-ghost w-full" style="color:#94a3b8;margin-top:8px" onclick="auth.logoutRole('host')">Logout</button>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+      <!-- TOPBAR -->
+      <header class="topbar">
+        <button class="topbar-menu-btn" id="sidebar-toggle" aria-label="Toggle navigation menu">☰</button>
+        <div>
+          <div class="topbar-title">Host Dashboard</div>
+          <div class="topbar-subtitle">Welcome back, <span id="topbar-user-name">Host</span></div>
+        </div>
+        <div class="topbar-actions">
+          <a href="create-event.html" class="btn btn-primary btn-sm">
+            <span>➕ Create Event</span>
+          </a>
+        </div>
+      </header>
+
+      <!-- PAGE CONTENT -->
+      <div class="page-content">
+        <!-- Verification Banner (if pending/rejected/suspended) -->
+        <div id="verification-banner" style="display:none; margin-bottom: 24px;"></div>
+
+        <!-- 7 STAT CARDS -->
+        <div class="stats-grid" id="stats-grid" style="grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));">
+          <!-- Total Events -->
+          <div class="stat-card purple">
+            <div class="stat-icon">📅</div>
+            <div class="stat-value" id="stat-total">-</div>
+            <div class="stat-label">Total Events</div>
+          </div>
+          <!-- Upcoming -->
+          <div class="stat-card blue">
+            <div class="stat-icon">🚀</div>
+            <div class="stat-value" id="stat-upcoming">-</div>
+            <div class="stat-label">Upcoming</div>
+          </div>
+          <!-- Ongoing -->
+          <div class="stat-card orange">
+            <div class="stat-icon">🔴</div>
+            <div class="stat-value" id="stat-ongoing">-</div>
+            <div class="stat-label">Ongoing</div>
+          </div>
+          <!-- Completed -->
+          <div class="stat-card green">
+            <div class="stat-icon">✅</div>
+            <div class="stat-value" id="stat-completed">-</div>
+            <div class="stat-label">Completed</div>
+          </div>
+          <!-- Pending Approval -->
+          <div class="stat-card teal">
+            <div class="stat-icon">⏳</div>
+            <div class="stat-value" id="stat-pending">-</div>
+            <div class="stat-label">Pending Approval</div>
+          </div>
+          <!-- Total Registrations -->
+          <div class="stat-card indigo">
+            <div class="stat-icon">👥</div>
+            <div class="stat-value" id="stat-registrations">-</div>
+            <div class="stat-label">Total Registrations</div>
+          </div>
+          <!-- Total Attendees -->
+          <div class="stat-card pink">
+            <div class="stat-icon">🎓</div>
+            <div class="stat-value" id="stat-attendees">-</div>
+            <div class="stat-label">Total Attendees</div>
+          </div>
+        </div>
+
+        <!-- SECTION GRID: Recent Events & Charts (Left), Quick Actions & Registrations (Right) -->
+        <div class="section-grid">
+          <!-- Left Column -->
+          <div>
+            <!-- Recent Events Card -->
+            <div class="card" style="margin-bottom: 24px;">
+              <div class="card-header">
+                <div>
+                  <h4 style="font-size: 1.05rem; font-weight: 700;">Recent Events</h4>
+                  <div style="font-size: 0.8rem; color: var(--gray-500);">Your latest organized campus activities</div>
+                </div>
+                <a href="events.html" class="btn btn-ghost btn-sm" style="color: var(--primary);">View All Events →</a>
+              </div>
+              <div class="table-responsive">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Event</th>
+                      <th>Category</th>
+                      <th>Date</th>
+                      <th>Approval</th>
+                      <th>Status</th>
+                      <th>Registrations</th>
+                      <th style="text-align: right;">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="recent-events-tbody">
+                    <tr>
+                      <td colspan="7" style="text-align:center; padding: 28px; color: var(--gray-400);">Loading events...</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Registration Trend Chart -->
+            <div class="chart-card">
+              <div class="chart-card-header">
+                <div>
+                  <div class="chart-card-title">Registration Trends by Event</div>
+                  <div class="chart-card-subtitle">Comparing student sign-ups across recent events</div>
+                </div>
+              </div>
+              <div class="chart-container" style="height: 280px;">
+                <canvas id="registrationChart"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column -->
+          <div>
+            <!-- Quick Actions Panel -->
+            <div class="card" style="margin-bottom: 24px;">
+              <div class="card-header">
+                <h4 style="font-size: 1rem; font-weight: 700;">Quick Actions</h4>
+              </div>
+              <div class="card-body" style="display:flex; flex-direction:column; gap:10px;">
+                <a href="create-event.html" class="btn btn-primary w-full" style="justify-content:flex-start;">
+                  <span style="font-size:1.1rem">➕</span>
+                  <div style="text-align:left; margin-left:4px;">
+                    <div>Create New Event</div>
+                    <small style="opacity:0.8; font-weight:400;">Submit for approval & publish</small>
+                  </div>
+                </a>
+                <a href="events.html" class="btn btn-light w-full" style="justify-content:flex-start;">
+                  <span style="font-size:1.1rem">📅</span>
+                  <div style="text-align:left; margin-left:4px;">
+                    <div style="font-weight:600; color:var(--gray-800);">Manage Events</div>
+                    <small style="color:var(--gray-500); font-weight:400;">Drafts, approvals, cancellations</small>
+                  </div>
+                </a>
+                <a href="analytics.html" class="btn btn-light w-full" style="justify-content:flex-start;">
+                  <span style="font-size:1.1rem">📊</span>
+                  <div style="text-align:left; margin-left:4px;">
+                    <div style="font-weight:600; color:var(--gray-800);">View Analytics</div>
+                    <small style="color:var(--gray-500); font-weight:400;">Attendance rate & capacity metrics</small>
+                  </div>
+                </a>
+                <a href="profile.html" class="btn btn-light w-full" style="justify-content:flex-start;">
+                  <span style="font-size:1.1rem">👤</span>
+                  <div style="text-align:left; margin-left:4px;">
+                    <div style="font-weight:600; color:var(--gray-800);">Organizer Profile</div>
+                    <small style="color:var(--gray-500); font-weight:400;">Department & verification status</small>
+                  </div>
+                </a>
+              </div>
+            </div>
+
+            <!-- Recent Registrations -->
+            <div class="card">
+              <div class="card-header">
+                <h4 style="font-size: 1rem; font-weight: 700;">Recent Registrations</h4>
+              </div>
+              <div class="card-body" style="padding: 12px 16px;">
+                <div id="recent-registrations-list" style="display:flex; flex-direction:column; gap:12px;">
+                  <div style="color:var(--gray-400); font-size:0.85rem; text-align:center; padding: 20px;">Loading sign-ups...</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    let regChartInstance = null;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!auth.requireRole('host', '../host/login.html')) return;
+      auth.populateSidebarUser();
+      setActiveNavLink();
+      initSidebarToggle();
+      await loadData();
+    });
+
+    async function loadData() {
+      loader.show();
+      try {
+        const [dashRes, meRes] = await Promise.all([
+          api.host.getDashboard(),
+          api.auth.getMe().catch(() => null)
+        ]);
+
+        loader.hide();
+
+        // 1. Check Host Verification Status
+        if (meRes && meRes.profile) {
+          const status = meRes.profile.verificationStatus;
+          const banner = document.getElementById('verification-banner');
+          if (status === 'pending') {
+            banner.innerHTML = `
+              <div class="alert alert-warning">
+                <div class="alert-icon">⏳</div>
+                <div class="alert-content">
+                  <h5>Host Account Pending Admin Verification</h5>
+                  <p>You can create and draft events, but publishing requires administrator approval of your host profile.</p>
+                </div>
+              </div>
+            `;
+            banner.style.display = 'block';
+          } else if (status === 'rejected') {
+            banner.innerHTML = `
+              <div class="alert alert-danger">
+                <div class="alert-icon">❌</div>
+                <div class="alert-content">
+                  <h5>Host Account Rejected</h5>
+                  <p>Your organizer account has been rejected by administration. Please contact the campus administrator for assistance.</p>
+                </div>
+              </div>
+            `;
+            banner.style.display = 'block';
+          } else if (status === 'suspended') {
+            banner.innerHTML = `
+              <div class="alert alert-danger">
+                <div class="alert-icon">🚫</div>
+                <div class="alert-content">
+                  <h5>Host Account Suspended</h5>
+                  <p>Your organizer privileges are temporarily suspended. Contact campus admin for reactivations.</p>
+                </div>
+              </div>
+            `;
+            banner.style.display = 'block';
+          }
+        }
+
+        // 2. Render Stats
+        if (dashRes.success && dashRes.data) {
+          const { stats, recentEvents, recentRegistrations } = dashRes.data;
+
+          document.getElementById('stat-total').textContent = stats.total ?? 0;
+          document.getElementById('stat-upcoming').textContent = stats.upcoming ?? 0;
+          document.getElementById('stat-ongoing').textContent = stats.ongoing ?? 0;
+          document.getElementById('stat-completed').textContent = stats.completed ?? 0;
+          document.getElementById('stat-pending').textContent = stats.pending ?? 0;
+          document.getElementById('stat-registrations').textContent = stats.totalRegistrations ?? 0;
+          document.getElementById('stat-attendees').textContent = stats.totalAttendees ?? 0;
+
+          // 3. Render Recent Events Table
+          renderRecentEvents(recentEvents || []);
+
+          // 4. Render Registration Chart
+          renderChart(recentEvents || []);
+
+          // 5. Render Recent Registrations List
+          renderRecentRegistrations(recentRegistrations || []);
+        }
+      } catch (err) {
+        loader.hide();
+        toast.error('Failed to load dashboard data: ' + err.message);
+      }
+    }
+
+    function renderRecentEvents(events) {
+      const tbody = document.getElementById('recent-events-tbody');
+      if (!events || events.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="7">
+              ${emptyState('📅', 'No Events Yet', 'Create your first event to start accepting registrations!', '<a href="create-event.html" class="btn btn-primary btn-sm" style="margin-top:8px;">Create Event</a>')}
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = events.map(ev => {
+        const catName = ev.categoryId?.name || 'General';
+        const catColor = ev.categoryId?.color || '#4f46e5';
+        const max = ev.maxParticipants || 100;
+        const current = ev.currentRegistrations || 0;
+
+        return `
+          <tr>
+            <td>
+              <div style="font-weight: 600; color: var(--gray-900); font-size: 0.9rem;">
+                <a href="event-detail.html?id=${ev._id}" style="color:var(--gray-900);">${ev.title}</a>
+              </div>
+            </td>
+            <td>
+              <span class="badge" style="background:${catColor}15; color:${catColor}; font-weight:600;">
+                ${catName}
+              </span>
+            </td>
+            <td>
+              <div style="font-size: 0.85rem; font-weight: 500;">${fmt.shortDate(ev.date)}</div>
+              <div style="font-size: 0.75rem; color: var(--gray-500);">${ev.startTime || ''}</div>
+            </td>
+            <td>${badge.approvalStatus(ev.approvalStatus)}</td>
+            <td>${badge.eventStatus(ev.eventStatus)}</td>
+            <td style="min-width: 140px;">
+              ${progressBar(current, max)}
+            </td>
+            <td style="text-align: right; white-space: nowrap;">
+              <div style="display:inline-flex; gap:6px;">
+                <a href="event-detail.html?id=${ev._id}" class="btn btn-light btn-sm" title="View Event">Details</a>
+                ${ev.approvalStatus === 'published' ? `
+                  <a href="participants.html?id=${ev._id}" class="btn btn-outline btn-sm" title="Manage Participants">Attendees</a>
+                ` : ''}
+                ${['draft', 'rejected'].includes(ev.approvalStatus) ? `
+                  <a href="create-event.html?id=${ev._id}" class="btn btn-outline btn-sm" title="Edit Event">Edit</a>
+                ` : ''}
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function renderRecentRegistrations(registrations) {
+      const container = document.getElementById('recent-registrations-list');
+      if (!registrations || registrations.length === 0) {
+        container.innerHTML = `
+          <div style="text-align:center; padding:24px 10px; color:var(--gray-400);">
+            <div style="font-size:1.8rem; margin-bottom:6px;">👥</div>
+            <div style="font-size:0.85rem;">No recent registrations recorded yet.</div>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = registrations.map(reg => {
+        const studentName = reg.studentId?.name || 'Student';
+        const studentEmail = reg.studentId?.email || '';
+        const eventTitle = reg.eventId?.title || 'Campus Event';
+        const initial = studentName[0]?.toUpperCase() || 'S';
+        const timeAgo = fmt.relativeTime(reg.registeredAt || reg.createdAt);
+
+        return `
+          <div style="display:flex; align-items:center; gap:12px; padding:8px 0; border-bottom:1px solid var(--gray-100);">
+            <div style="width:34px; height:34px; border-radius:50%; background:linear-gradient(135deg, var(--secondary), var(--primary)); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.8rem; flex-shrink:0;">
+              ${initial}
+            </div>
+            <div style="flex:1; min-width:0;">
+              <div style="font-weight:600; font-size:0.85rem; color:var(--gray-900); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                ${studentName}
+              </div>
+              <div style="font-size:0.75rem; color:var(--gray-500); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                registered for <strong style="color:var(--gray-700);">${eventTitle}</strong>
+              </div>
+            </div>
+            <div style="font-size:0.72rem; color:var(--gray-400); flex-shrink:0;">
+              ${timeAgo}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderChart(events) {
+      const ctx = document.getElementById('registrationChart').getContext('2d');
+      if (regChartInstance) {
+        regChartInstance.destroy();
+      }
+
+      if (!events || events.length === 0) {
+        // Fallback placeholder chart
+        regChartInstance = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: ['Sample Workshop', 'Annual Fest', 'Tech Hackathon'],
+            datasets: [{
+              label: 'Registrations',
+              data: [0, 0, 0],
+              backgroundColor: 'rgba(79, 70, 229, 0.2)',
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false }
+            }
+          }
+        });
+        return;
+      }
+
+      const labels = events.map(e => e.title.length > 18 ? e.title.slice(0, 16) + '...' : e.title);
+      const registeredData = events.map(e => e.currentRegistrations || 0);
+      const capacityData = events.map(e => e.maxParticipants || 100);
+
+      regChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'Registered Students',
+              data: registeredData,
+              backgroundColor: '#4f46e5',
+              borderRadius: 6,
+              maxBarThickness: 36,
+            },
+            {
+              label: 'Total Capacity',
+              data: capacityData,
+              backgroundColor: '#e2e8f0',
+              borderRadius: 6,
+              maxBarThickness: 36,
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: {
+                boxWidth: 12,
+                font: { family: 'Inter', size: 12 }
+              }
+            },
+            tooltip: {
+              callbacks: {
+                afterBody: function(context) {
+                  const idx = context[0].dataIndex;
+                  const reg = registeredData[idx];
+                  const cap = capacityData[idx];
+                  const pct = cap > 0 ? Math.round((reg / cap) * 100) : 0;
+                  return `Fill Rate: ${pct}%`;
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: { precision: 0, font: { family: 'Inter' } },
+              grid: { color: '#f1f5f9' }
+            },
+            x: {
+              grid: { display: false },
+              ticks: { font: { family: 'Inter', size: 11 } }
+            }
+          }
+        }
+      });
+    }
+  </script>
+</body>
+</html>

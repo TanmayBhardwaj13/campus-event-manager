@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Clubs & Societies - Admin Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+</head>
+<body>
+
+<div class="dashboard-layout">
+  <div class="sidebar-overlay" onclick="document.querySelector('.sidebar').classList.remove('open');this.classList.remove('visible')"></div>
+  
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-icon">🎓</div>
+      <div class="sidebar-brand-text">
+        <div class="brand-name">CampusEvents</div>
+        <div class="brand-role">Admin Portal</div>
+      </div>
+    </div>
+    
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Main</div>
+      <ul class="sidebar-nav">
+        <li><a href="dashboard.html"><span class="nav-icon">🏠</span> Dashboard</a></li>
+        <li><a href="events.html"><span class="nav-icon">📅</span> Events</a></li>
+        <li><a href="students.html"><span class="nav-icon">👥</span> Students</a></li>
+        <li><a href="hosts.html"><span class="nav-icon">👔</span> Hosts</a></li>
+        <li><a href="departments.html"><span class="nav-icon">🏛️</span> Departments</a></li>
+        <li><a href="clubs.html"><span class="nav-icon">🎯</span> Clubs</a></li>
+        <li><a href="categories.html"><span class="nav-icon">🏷️</span> Categories</a></li>
+        <li><a href="analytics.html"><span class="nav-icon">📊</span> Analytics</a></li>
+      </ul>
+    </div>
+    
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">System</div>
+      <ul class="sidebar-nav">
+        <li><a href="settings.html"><span class="nav-icon">⚙️</span> Settings</a></li>
+      </ul>
+    </div>
+    
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="sidebar-user-avatar" id="sidebar-user-avatar">A</div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name" id="sidebar-user-name">Admin</div>
+          <div class="sidebar-user-role" id="sidebar-user-role">admin</div>
+        </div>
+      </div>
+      <button class="btn btn-ghost w-full" style="color:#94a3b8;margin-top:8px" onclick="auth.logoutRole('admin')">Logout</button>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <div class="main-content">
+    <header class="topbar">
+      <button class="topbar-menu-btn" id="sidebar-toggle">☰</button>
+      <div>
+        <div class="topbar-title">Student Clubs & Societies</div>
+        <div class="topbar-subtitle">Authorize student organizations, assign department oversight, and manage recognition</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-primary btn-sm" onclick="openAddClubModal()">
+          <span>➕</span> Add Club
+        </button>
+        <span id="topbar-user-name" style="font-size:.85rem;color:var(--gray-600);font-weight:600;"></span>
+      </div>
+    </header>
+
+    <div class="page-content">
+
+      <!-- TOP STATS -->
+      <div class="stats-grid stats-grid-3" style="margin-bottom:20px;">
+        <div class="stat-card purple">
+          <div class="stat-icon">🎯</div>
+          <div class="stat-value" id="stat-total-clubs">0</div>
+          <div class="stat-label">Total Clubs & Societies</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-icon">🛡️</div>
+          <div class="stat-value" id="stat-approved-clubs">0</div>
+          <div class="stat-label">Officially Recognized</div>
+        </div>
+        <div class="stat-card orange">
+          <div class="stat-icon">⏳</div>
+          <div class="stat-value" id="stat-pending-clubs">0</div>
+          <div class="stat-label">Unapproved / Pending Review</div>
+        </div>
+      </div>
+
+      <!-- CLUBS TABLE -->
+      <div class="table-wrapper">
+        <div class="table-header">
+          <h4>Clubs Directory</h4>
+          <div class="table-controls">
+            <div class="search-input-wrap">
+              <span class="search-icon">🔍</span>
+              <input
+                type="text"
+                id="search-input"
+                class="search-input"
+                placeholder="Search club name..."
+                oninput="applyFilters()"
+              >
+            </div>
+
+            <select id="department-filter" class="filter-select" onchange="applyFilters()">
+              <option value="">All Departments</option>
+            </select>
+
+            <select id="approval-filter" class="filter-select" onchange="applyFilters()">
+              <option value="">All Approval States</option>
+              <option value="approved">Approved / Recognized</option>
+              <option value="unapproved">Unapproved</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Club Name & Info</th>
+                <th>Affiliated Department</th>
+                <th>University Recognition</th>
+                <th>Operating Status</th>
+                <th style="text-align:right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="clubs-tbody">
+              <tr><td colspan="5" style="text-align:center;padding:32px;color:var(--gray-400);">Loading clubs...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ADD / EDIT CLUB MODAL -->
+<div class="modal-overlay" id="club-modal" style="display:none;">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-header">
+      <h3 id="modal-club-title">Add New Club</h3>
+      <button class="modal-close" onclick="modal.hide('club-modal')">✕</button>
+    </div>
+    <form id="club-form" onsubmit="handleClubSubmit(event)">
+      <div class="modal-body">
+        <input type="hidden" id="club-id">
+
+        <div class="form-group">
+          <label class="form-label" for="club-name">Club Name <span class="required">*</span></label>
+          <input
+            type="text"
+            id="club-name"
+            class="form-control"
+            placeholder="e.g. Google Developer Student Club"
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="club-department">Parent Department</label>
+          <select id="club-department" class="form-control">
+            <option value="">Campus-Wide / Independent</option>
+          </select>
+          <span class="form-help">Select the supervising faculty or department, if any.</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="club-desc">Description</label>
+          <textarea
+            id="club-desc"
+            class="form-control"
+            rows="3"
+            placeholder="Purpose, activities, and mission of this club..."
+          ></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="club-status">Status</label>
+            <select id="club-status" class="form-control">
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+
+          <div class="form-group" style="display:flex;flex-direction:column;justify-content:center;">
+            <label class="form-label" style="margin-bottom:8px;">Recognition</label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:0.9rem;color:var(--gray-700);">
+              <input type="checkbox" id="club-approved" style="width:18px;height:18px;accent-color:var(--primary);">
+              Officially Approved
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" onclick="modal.hide('club-modal')">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="save-club-btn">Save Club</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="../js/api.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/utils.js"></script>
+<script>
+  let clubsList = [];
+  let departmentsList = [];
+  let isEditing = false;
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    if (!auth.requireRole('admin', '../admin/login.html')) return;
+    auth.populateSidebarUser();
+    setActiveNavLink();
+    initSidebarToggle();
+
+    await loadDepartments();
+    await loadClubs();
+  });
+
+  async function loadDepartments() {
+    try {
+      const res = await api.admin.getDepartments();
+      departmentsList = res.data || [];
+
+      const modalDept = document.getElementById('club-department');
+      const filterDept = document.getElementById('department-filter');
+
+      departmentsList.forEach(dept => {
+        const opt1 = document.createElement('option');
+        opt1.value = dept._id;
+        opt1.textContent = dept.name;
+        modalDept.appendChild(opt1);
+
+        const opt2 = document.createElement('option');
+        opt2.value = dept._id;
+        opt2.textContent = dept.name;
+        filterDept.appendChild(opt2);
+      });
+    } catch (err) {
+      console.warn('Could not load departments:', err);
+    }
+  }
+
+  async function loadClubs() {
+    loader.show();
+    try {
+      const res = await api.admin.getClubs();
+      clubsList = res.data || [];
+      updateStats();
+      applyFilters();
+    } catch (err) {
+      toast.error('Failed to load clubs: ' + err.message);
+      document.getElementById('clubs-tbody').innerHTML = `
+        <tr><td colspan="5" style="text-align:center;color:var(--danger);padding:24px;">Failed to load clubs.</td></tr>
+      `;
+    } finally {
+      loader.hide();
+    }
+  }
+
+  function updateStats() {
+    document.getElementById('stat-total-clubs').textContent = clubsList.length;
+    const approved = clubsList.filter(c => c.approved).length;
+    document.getElementById('stat-approved-clubs').textContent = approved;
+    document.getElementById('stat-pending-clubs').textContent = clubsList.length - approved;
+  }
+
+  function applyFilters() {
+    const search = document.getElementById('search-input').value.toLowerCase().trim();
+    const deptId = document.getElementById('department-filter').value;
+    const approval = document.getElementById('approval-filter').value;
+
+    let filtered = clubsList;
+
+    if (search) {
+      filtered = filtered.filter(c => 
+        (c.name || '').toLowerCase().includes(search) ||
+        (c.description || '').toLowerCase().includes(search)
+      );
+    }
+
+    if (deptId) {
+      filtered = filtered.filter(c => c.departmentId?._id === deptId || c.departmentId === deptId);
+    }
+
+    if (approval === 'approved') {
+      filtered = filtered.filter(c => c.approved);
+    } else if (approval === 'unapproved') {
+      filtered = filtered.filter(c => !c.approved);
+    }
+
+    renderClubsTable(filtered);
+  }
+
+  function renderClubsTable(items) {
+    const tbody = document.getElementById('clubs-tbody');
+    if (!items || items.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="5">
+            ${emptyState('🎯', 'No Clubs Found', 'Add a new club or adjust the filters.')}
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    tbody.innerHTML = items.map(club => {
+      const deptName = club.departmentId?.name || 'Independent / Campus-Wide';
+      const isApproved = !!club.approved;
+
+      return `
+        <tr>
+          <td>
+            <div style="font-weight:700;color:var(--gray-900);font-size:0.95rem;">${escapeHtml(club.name)}</div>
+            <div style="font-size:0.8rem;color:var(--gray-500);margin-top:2px;max-width:380px;line-height:1.4;">
+              ${escapeHtml(club.description || 'No description entered.')}
+            </div>
+          </td>
+          <td>
+            <span style="font-weight:500;color:var(--gray-700);">${escapeHtml(deptName)}</span>
+          </td>
+          <td>
+            ${isApproved 
+              ? '<span class="badge badge-success">🛡️ Recognized</span>' 
+              : '<span class="badge badge-warning">⏳ Not Recognized</span>'
+            }
+          </td>
+          <td>
+            ${badge.accountStatus(club.status || 'active')}
+          </td>
+          <td style="text-align:right;">
+            <div style="display:inline-flex;gap:6px;align-items:center;">
+              <button class="btn btn-outline btn-sm" onclick="openEditClubModal('${club._id}')">
+                Edit
+              </button>
+              <button class="btn ${isApproved ? 'btn-light' : 'btn-success'} btn-sm" onclick="toggleClubApproval('${club._id}', ${isApproved}, '${escapeHtml(club.name)}')">
+                ${isApproved ? 'Revoke Approval' : 'Approve Club'}
+              </button>
+              <button class="btn btn-ghost btn-sm" style="color:var(--danger);" onclick="deleteClub('${club._id}', '${escapeHtml(club.name)}')">
+                🗑️
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function openAddClubModal() {
+    isEditing = false;
+    document.getElementById('modal-club-title').textContent = 'Add New Club';
+    document.getElementById('club-id').value = '';
+    document.getElementById('club-name').value = '';
+    document.getElementById('club-department').value = '';
+    document.getElementById('club-desc').value = '';
+    document.getElementById('club-status').value = 'active';
+    document.getElementById('club-approved').checked = true;
+    modal.show('club-modal');
+  }
+
+  function openEditClubModal(id) {
+    const club = clubsList.find(c => c._id === id);
+    if (!club) return;
+
+    isEditing = true;
+    document.getElementById('modal-club-title').textContent = 'Edit Club Details';
+    document.getElementById('club-id').value = club._id;
+    document.getElementById('club-name').value = club.name;
+    document.getElementById('club-department').value = club.departmentId?._id || club.departmentId || '';
+    document.getElementById('club-desc').value = club.description || '';
+    document.getElementById('club-status').value = club.status || 'active';
+    document.getElementById('club-approved').checked = !!club.approved;
+    modal.show('club-modal');
+  }
+
+  async function handleClubSubmit(e) {
+    e.preventDefault();
+    const id = document.getElementById('club-id').value;
+    const name = document.getElementById('club-name').value.trim();
+    const departmentId = document.getElementById('club-department').value || null;
+    const description = document.getElementById('club-desc').value.trim();
+    const status = document.getElementById('club-status').value;
+    const approved = document.getElementById('club-approved').checked;
+
+    const btn = document.getElementById('save-club-btn');
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+
+    try {
+      const payload = { name, departmentId, description, status, approved };
+      if (isEditing && id) {
+        await api.admin.updateClub(id, payload);
+        toast.success(`Club "${name}" updated.`);
+      } else {
+        await api.admin.createClub(payload);
+        toast.success(`Club "${name}" created.`);
+      }
+      modal.hide('club-modal');
+      await loadClubs();
+    } catch (err) {
+      toast.error('Failed to save club: ' + err.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Save Club';
+    }
+  }
+
+  async function toggleClubApproval(id, currentlyApproved, name) {
+    const newStatus = !currentlyApproved;
+    const actionWord = newStatus ? 'approve and officially recognize' : 'revoke official approval for';
+    const ok = await modal.confirm({
+      title: `${newStatus ? 'Approve' : 'Revoke'} Club`,
+      message: `Are you sure you want to ${actionWord} "${name}"?`,
+      confirmText: newStatus ? 'Approve Club' : 'Revoke Recognition',
+      type: newStatus ? 'success' : 'warning'
+    });
+    if (!ok) return;
+
+    loader.show();
+    try {
+      await api.admin.updateClub(id, { approved: newStatus });
+      toast.success(`Club "${name}" is now ${newStatus ? 'Approved' : 'Unapproved'}.`);
+      await loadClubs();
+    } catch (err) {
+      toast.error('Failed to update club: ' + err.message);
+    } finally {
+      loader.hide();
+    }
+  }
+
+  async function deleteClub(id, name) {
+    const ok = await modal.confirm({
+      title: 'Delete Club',
+      message: `Are you sure you want to permanently delete "${name}"?`,
+      confirmText: 'Delete Club',
+      type: 'danger'
+    });
+    if (!ok) return;
+
+    loader.show();
+    try {
+      await api.admin.deleteClub(id);
+      toast.success(`Club "${name}" was deleted.`);
+      await loadClubs();
+    } catch (err) {
+      toast.error('Failed to delete club: ' + err.message);
+    } finally {
+      loader.hide();
+    }
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>"']/g, m => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    })[m]);
+  }
+</script>
+
+</body>
+</html>

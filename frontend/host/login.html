@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Host Login - Campus Event Manager</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/utils.js"></script>
+  <style>
+    body {
+      min-height: 100vh;
+      display: flex;
+      background: #f8fafc;
+      overflow-x: hidden;
+    }
+    .auth-split {
+      display: flex;
+      width: 100vw;
+      min-height: 100vh;
+    }
+    .auth-banner {
+      flex: 1.1;
+      background: linear-gradient(135deg, #090d16 0%, #1e1b4b 45%, #312e81 100%);
+      color: #fff;
+      padding: 60px 48px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+    }
+    .auth-banner::before {
+      content: '';
+      position: absolute;
+      width: 500px;
+      height: 500px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.25) 0%, rgba(99, 102, 241, 0) 70%);
+      top: -100px;
+      right: -100px;
+      pointer-events: none;
+    }
+    .auth-banner::after {
+      content: '';
+      position: absolute;
+      width: 400px;
+      height: 400px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(168, 85, 247, 0.2) 0%, rgba(168, 85, 247, 0) 70%);
+      bottom: -80px;
+      left: -80px;
+      pointer-events: none;
+    }
+    .auth-banner-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      position: relative;
+      z-index: 2;
+    }
+    .auth-banner-logo {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4);
+    }
+    .auth-banner-brand {
+      font-family: var(--font-display);
+      font-size: 1.3rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #fff;
+    }
+    .auth-banner-pill {
+      font-size: 0.72rem;
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #c7d2fe;
+      padding: 2px 8px;
+      border-radius: 999px;
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+    .auth-banner-main {
+      position: relative;
+      z-index: 2;
+      max-width: 520px;
+      margin: 40px 0;
+    }
+    .auth-banner-title {
+      font-size: 2.3rem;
+      font-weight: 800;
+      line-height: 1.25;
+      color: #fff;
+      margin-bottom: 16px;
+    }
+    .auth-banner-desc {
+      color: #cbd5e1;
+      font-size: 1rem;
+      line-height: 1.6;
+      margin-bottom: 36px;
+    }
+    .feature-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .feature-item {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      padding: 18px;
+      border-radius: 14px;
+      transition: all 0.2s ease;
+    }
+    .feature-item:hover {
+      background: rgba(255, 255, 255, 0.1);
+      transform: translateY(-2px);
+    }
+    .feature-icon {
+      font-size: 1.5rem;
+      margin-bottom: 8px;
+    }
+    .feature-name {
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+    .feature-desc {
+      font-size: 0.8rem;
+      color: #94a3b8;
+      line-height: 1.4;
+    }
+    .auth-banner-footer {
+      position: relative;
+      z-index: 2;
+      font-size: 0.85rem;
+      color: #94a3b8;
+    }
+    .auth-form-side {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 32px;
+      background: #ffffff;
+    }
+    .auth-card {
+      width: 100%;
+      max-width: 440px;
+    }
+    .auth-header {
+      margin-bottom: 24px;
+    }
+    .auth-header h2 {
+      font-size: 1.85rem;
+      font-weight: 800;
+      color: var(--gray-900);
+      letter-spacing: -0.02em;
+    }
+    .auth-header p {
+      color: var(--gray-500);
+      margin-top: 6px;
+      font-size: 0.95rem;
+    }
+    .input-icon-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .input-icon-wrap .form-control {
+      padding-left: 42px;
+      padding-right: 42px;
+    }
+    .input-icon {
+      position: absolute;
+      left: 14px;
+      color: var(--gray-400);
+      font-size: 1rem;
+      pointer-events: none;
+    }
+    .toggle-pass-btn {
+      position: absolute;
+      right: 12px;
+      background: none;
+      border: none;
+      color: var(--gray-400);
+      cursor: pointer;
+      font-size: 1rem;
+      padding: 4px;
+    }
+    .toggle-pass-btn:hover {
+      color: var(--gray-700);
+    }
+    @media (max-width: 960px) {
+      .auth-split {
+        flex-direction: column;
+      }
+      .auth-banner {
+        padding: 40px 24px;
+        flex: none;
+      }
+      .feature-grid {
+        grid-template-columns: 1fr;
+      }
+      .auth-banner-title {
+        font-size: 1.8rem;
+      }
+      .auth-form-side {
+        padding: 40px 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="auth-split">
+    <!-- Left Panel -->
+    <div class="auth-banner">
+      <div class="auth-banner-header">
+        <div class="auth-banner-logo">🎟️</div>
+        <div>
+          <div class="auth-banner-brand">CampusEvents</div>
+        </div>
+        <span class="auth-banner-pill">Host Portal</span>
+      </div>
+
+      <div class="auth-banner-main">
+        <h1 class="auth-banner-title">Empowering Campus Organizers & Leaders</h1>
+        <p class="auth-banner-desc">Everything you need to plan, publish, coordinate, and measure impact for university events, clubs, departments, and hackathons.</p>
+
+        <div class="feature-grid">
+          <div class="feature-item">
+            <div class="feature-icon">✨</div>
+            <div class="feature-name">Create Events</div>
+            <div class="feature-desc">Design rich event pages with schedules, venues, rules, and posters.</div>
+          </div>
+          <div class="feature-item">
+            <div class="feature-icon">📈</div>
+            <div class="feature-name">Track Registrations</div>
+            <div class="feature-desc">Monitor student sign-ups, ticket caps, waitlists, and live counts.</div>
+          </div>
+          <div class="feature-item">
+            <div class="feature-icon">📋</div>
+            <div class="feature-name">Mark Attendance</div>
+            <div class="feature-desc">Fast attendance check-ins, bulk updates, and real-time roll call.</div>
+          </div>
+          <div class="feature-item">
+            <div class="feature-icon">🎓</div>
+            <div class="feature-name">Issue Certificates</div>
+            <div class="feature-desc">Automated verified digital credentials dispatched directly to attendees.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="auth-banner-footer">
+        © 2026 Campus Event Manager Platform · Enterprise College Suite
+      </div>
+    </div>
+
+    <!-- Right Panel: Form -->
+    <div class="auth-form-side">
+      <div class="auth-card">
+        <div class="auth-header">
+          <h2>Host Login</h2>
+          <p>Access your organizer dashboard & manage college events.</p>
+        </div>
+
+        <!-- Info banner -->
+        <div class="alert alert-info" style="margin-bottom: 20px;">
+          <div class="alert-icon">ℹ️</div>
+          <div class="alert-content">
+            <p>Your account must be approved by admin before you can log in to host events.</p>
+          </div>
+        </div>
+
+        <!-- Error display container -->
+        <div id="login-error" class="alert alert-danger" style="display:none; margin-bottom: 20px;">
+          <div class="alert-icon">⚠️</div>
+          <div class="alert-content" id="login-error-text"></div>
+        </div>
+
+        <form id="host-login-form">
+          <div class="form-group">
+            <label class="form-label" for="email">College Email <span class="required">*</span></label>
+            <div class="input-icon-wrap">
+              <span class="input-icon">✉️</span>
+              <input type="email" id="email" class="form-control" placeholder="organizer@college.edu" required autocomplete="email">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+              <label class="form-label" for="password" style="margin-bottom:0">Password <span class="required">*</span></label>
+            </div>
+            <div class="input-icon-wrap">
+              <span class="input-icon">🔒</span>
+              <input type="password" id="password" class="form-control" placeholder="••••••••" required autocomplete="current-password">
+              <button type="button" class="toggle-pass-btn" id="toggle-password" aria-label="Toggle password visibility">👁️</button>
+            </div>
+          </div>
+
+          <button type="submit" id="submit-btn" class="btn btn-primary w-full btn-lg" style="margin-top:12px;">
+            <span>Sign In to Host Portal</span>
+          </button>
+        </form>
+
+        <div style="margin-top: 28px; text-align: center; border-top: 1px solid var(--gray-200); padding-top: 20px;">
+          <p style="font-size:0.9rem; color:var(--gray-600); margin-bottom:10px;">
+            Don't have a host account?
+            <a href="register.html" style="color:var(--primary); font-weight:700;">Register as Host</a>
+          </p>
+          <p style="font-size:0.85rem; color:var(--gray-500);">
+            Are you a student?
+            <a href="../student/login.html" style="color:var(--secondary); font-weight:600;">Student Login</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // If already logged in as host, go to dashboard
+      if (auth.isLoggedIn() && auth.getRole() === 'host') {
+        window.location.href = 'dashboard.html';
+        return;
+      }
+
+      // Password toggle
+      const passInput = document.getElementById('password');
+      const toggleBtn = document.getElementById('toggle-password');
+      toggleBtn.addEventListener('click', () => {
+        const type = passInput.type === 'password' ? 'text' : 'password';
+        passInput.type = type;
+        toggleBtn.textContent = type === 'password' ? '👁️' : '🙈';
+      });
+
+      // Form submit
+      const form = document.getElementById('host-login-form');
+      const errorBox = document.getElementById('login-error');
+      const errorText = document.getElementById('login-error-text');
+      const submitBtn = document.getElementById('submit-btn');
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        errorBox.style.display = 'none';
+
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+
+        if (!email || !password) {
+          errorText.textContent = 'Please enter both email and password.';
+          errorBox.style.display = 'flex';
+          return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span>Signing In...</span>';
+        loader.show();
+
+        try {
+          const res = await api.auth.loginHost({ email, password });
+          if (res.token && res.user) {
+            auth.setSession(res.token, res.user);
+            toast.success('Welcome back, ' + res.user.name + '!');
+            setTimeout(() => {
+              window.location.href = 'dashboard.html';
+            }, 600);
+          } else {
+            throw new Error(res.message || 'Login failed');
+          }
+        } catch (err) {
+          loader.hide();
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<span>Sign In to Host Portal</span>';
+
+          const msg = err.message || 'Unable to sign in. Please verify your credentials.';
+          errorText.innerHTML = `<strong>Access Denied:</strong> ${msg}`;
+          errorBox.style.display = 'flex';
+          toast.error(msg);
+        }
+      });
+    });
+  </script>
+</body>
+</html>

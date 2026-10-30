@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Event Hosts - Admin Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  <style>
+    .host-type-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .host-type-faculty { background: #e0e7ff; color: #3730a3; }
+    .host-type-club { background: #fce7f3; color: #9d174d; }
+    .host-type-department { background: #dcfce7; color: #166534; }
+    .host-type-society { background: #fef3c7; color: #92400e; }
+    .host-type-committee { background: #ccfbf1; color: #115e59; }
+    .host-type-student { background: #f3f4f6; color: #374151; }
+    .detail-grid-host {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 20px;
+      background: var(--gray-50);
+      padding: 16px;
+      border-radius: var(--border-radius-sm);
+      border: 1px solid var(--gray-200);
+    }
+    .hosted-event-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--gray-100);
+    }
+    .hosted-event-item:last-child {
+      border-bottom: none;
+    }
+  </style>
+</head>
+<body>
+
+<div class="dashboard-layout">
+  <div class="sidebar-overlay" onclick="document.querySelector('.sidebar').classList.remove('open');this.classList.remove('visible')"></div>
+  
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-icon">🎓</div>
+      <div class="sidebar-brand-text">
+        <div class="brand-name">CampusEvents</div>
+        <div class="brand-role">Admin Portal</div>
+      </div>
+    </div>
+    
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Main</div>
+      <ul class="sidebar-nav">
+        <li><a href="dashboard.html"><span class="nav-icon">🏠</span> Dashboard</a></li>
+        <li><a href="events.html"><span class="nav-icon">📅</span> Events</a></li>
+        <li><a href="students.html"><span class="nav-icon">👥</span> Students</a></li>
+        <li><a href="hosts.html"><span class="nav-icon">👔</span> Hosts</a></li>
+        <li><a href="departments.html"><span class="nav-icon">🏛️</span> Departments</a></li>
+        <li><a href="clubs.html"><span class="nav-icon">🎯</span> Clubs</a></li>
+        <li><a href="categories.html"><span class="nav-icon">🏷️</span> Categories</a></li>
+        <li><a href="analytics.html"><span class="nav-icon">📊</span> Analytics</a></li>
+      </ul>
+    </div>
+    
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">System</div>
+      <ul class="sidebar-nav">
+        <li><a href="settings.html"><span class="nav-icon">⚙️</span> Settings</a></li>
+      </ul>
+    </div>
+    
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="sidebar-user-avatar" id="sidebar-user-avatar">A</div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name" id="sidebar-user-name">Admin</div>
+          <div class="sidebar-user-role" id="sidebar-user-role">admin</div>
+        </div>
+      </div>
+      <button class="btn btn-ghost w-full" style="color:#94a3b8;margin-top:8px" onclick="auth.logoutRole('admin')">Logout</button>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <div class="main-content">
+    <header class="topbar">
+      <button class="topbar-menu-btn" id="sidebar-toggle">☰</button>
+      <div>
+        <div class="topbar-title">Host Verification & Management</div>
+        <div class="topbar-subtitle">Review host registrations, verify department affiliations, and manage permissions</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-light btn-sm" onclick="fetchHosts()">🔄 Refresh</button>
+        <span id="topbar-user-name" style="font-size:.85rem;color:var(--gray-600);font-weight:600;"></span>
+      </div>
+    </header>
+
+    <div class="page-content">
+
+      <!-- TABS -->
+      <div class="tabs" id="host-tabs">
+        <button class="tab-btn active" data-tab="" onclick="switchTab('')">
+          All Hosts <span class="tab-count" id="count-all">0</span>
+        </button>
+        <button class="tab-btn" data-tab="pending" onclick="switchTab('pending')">
+          Pending Verification <span class="tab-count" id="count-pending" style="background:var(--warning-bg);color:var(--warning-dark);">0</span>
+        </button>
+        <button class="tab-btn" data-tab="approved" onclick="switchTab('approved')">
+          Approved <span class="tab-count" id="count-approved">0</span>
+        </button>
+        <button class="tab-btn" data-tab="rejected" onclick="switchTab('rejected')">
+          Rejected <span class="tab-count" id="count-rejected">0</span>
+        </button>
+        <button class="tab-btn" data-tab="suspended" onclick="switchTab('suspended')">
+          Suspended <span class="tab-count" id="count-suspended">0</span>
+        </button>
+      </div>
+
+      <!-- TABLE WRAPPER -->
+      <div class="table-wrapper">
+        <div class="table-header">
+          <h4 id="table-heading">All Registered Hosts</h4>
+          <div class="table-controls">
+            <div class="search-input-wrap">
+              <span class="search-icon">🔍</span>
+              <input
+                type="text"
+                id="search-input"
+                class="search-input"
+                placeholder="Search host name or email..."
+                oninput="handleSearch()"
+              >
+            </div>
+            
+            <select id="type-filter" class="filter-select" onchange="applyFilters()">
+              <option value="">All Host Types</option>
+              <option value="faculty">Faculty</option>
+              <option value="department">Department</option>
+              <option value="club">Club</option>
+              <option value="society">Society</option>
+              <option value="committee">Committee</option>
+              <option value="student">Student</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Host Details</th>
+                <th>Type</th>
+                <th>Department / Club</th>
+                <th>Designation</th>
+                <th>Verification</th>
+                <th>Account</th>
+                <th style="text-align:right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="hosts-tbody">
+              <tr><td colspan="7" style="text-align:center;padding:32px;color:var(--gray-400);">Loading host accounts...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- VIEW HOST DETAILS MODAL -->
+<div class="modal-overlay" id="host-modal" style="display:none;">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div class="sidebar-user-avatar" id="modal-host-avatar" style="width:42px;height:42px;font-size:1.1rem;">H</div>
+        <div>
+          <h3 id="modal-host-name" style="margin:0;font-size:1.2rem;">Host Name</h3>
+          <div id="modal-host-email" style="font-size:0.85rem;color:var(--gray-500);">host@campus.edu</div>
+        </div>
+      </div>
+      <button class="modal-close" onclick="modal.hide('host-modal')">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <h4 style="font-size:0.95rem;font-weight:700;margin-bottom:12px;color:var(--gray-900);">Host Information</h4>
+      <div class="detail-grid-host">
+        <div>
+          <div style="font-size:0.75rem;color:var(--gray-500);text-transform:uppercase;font-weight:700;">Host Type</div>
+          <div id="modal-host-type" style="margin-top:2px;font-weight:600;">-</div>
+        </div>
+        <div>
+          <div style="font-size:0.75rem;color:var(--gray-500);text-transform:uppercase;font-weight:700;">Department / Club</div>
+          <div id="modal-host-affiliation" style="margin-top:2px;font-weight:600;">-</div>
+        </div>
+        <div>
+          <div style="font-size:0.75rem;color:var(--gray-500);text-transform:uppercase;font-weight:700;">Designation / Title</div>
+          <div id="modal-host-designation" style="margin-top:2px;font-weight:600;">-</div>
+        </div>
+        <div>
+          <div style="font-size:0.75rem;color:var(--gray-500);text-transform:uppercase;font-weight:700;">Phone Number</div>
+          <div id="modal-host-phone" style="margin-top:2px;font-weight:600;">-</div>
+        </div>
+        <div>
+          <div style="font-size:0.75rem;color:var(--gray-500);text-transform:uppercase;font-weight:700;">Verification Status</div>
+          <div id="modal-host-verif-status" style="margin-top:4px;">-</div>
+        </div>
+        <div>
+          <div style="font-size:0.75rem;color:var(--gray-500);text-transform:uppercase;font-weight:700;">Account Status</div>
+          <div id="modal-host-acc-status" style="margin-top:4px;">-</div>
+        </div>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="font-size:0.75rem;color:var(--gray-500);text-transform:uppercase;font-weight:700;margin-bottom:4px;">Description / Profile Bio</div>
+        <div id="modal-host-bio" style="font-size:0.88rem;color:var(--gray-700);background:var(--gray-50);padding:12px;border-radius:6px;border:1px solid var(--gray-200);line-height:1.5;">
+          No bio provided.
+        </div>
+      </div>
+
+      <!-- CREATED EVENTS -->
+      <h4 style="font-size:0.95rem;font-weight:700;margin-top:20px;margin-bottom:12px;color:var(--gray-900);">
+        Hosted Events (<span id="modal-host-events-count">0</span>)
+      </h4>
+      <div id="modal-host-events-list" style="border:1px solid var(--gray-200);border-radius:var(--border-radius-sm);max-height:200px;overflow-y:auto;background:#fff;">
+        <div style="padding:16px;text-align:center;color:var(--gray-400);">No events created by this host yet.</div>
+      </div>
+    </div>
+
+    <div class="modal-footer" id="modal-host-footer-actions">
+      <button class="btn btn-ghost" onclick="modal.hide('host-modal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<script src="../js/api.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/utils.js"></script>
+<script>
+  let activeTab = '';
+  let allHostsData = [];
+  let searchTimer = null;
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    if (!auth.requireRole('admin', '../admin/login.html')) return;
+    auth.populateSidebarUser();
+    setActiveNavLink();
+    initSidebarToggle();
+
+    // Check URL parameters for tab
+    const urlParams = new URLSearchParams(window.location.search);
+    const initialTab = urlParams.get('tab');
+    if (initialTab) {
+      activeTab = initialTab;
+      highlightTab(initialTab);
+    }
+
+    await fetchHosts();
+  });
+
+  function highlightTab(tabName) {
+    document.querySelectorAll('#host-tabs .tab-btn').forEach(btn => {
+      if (btn.getAttribute('data-tab') === tabName) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
+  }
+
+  function switchTab(tab) {
+    activeTab = tab;
+    highlightTab(tab);
+    applyFilters();
+  }
+
+  function handleSearch() {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => {
+      applyFilters();
+    }, 300);
+  }
+
+  async function fetchHosts() {
+    loader.show();
+    try {
+      const res = await api.admin.getHosts();
+      allHostsData = res.data || [];
+
+      // Update badge counts
+      updateTabCounts(allHostsData);
+
+      applyFilters();
+    } catch (err) {
+      toast.error('Failed to load hosts: ' + err.message);
+      document.getElementById('hosts-tbody').innerHTML = `
+        <tr><td colspan="7" style="text-align:center;color:var(--danger);padding:24px;">Failed to load hosts.</td></tr>
+      `;
+    } finally {
+      loader.hide();
+    }
+  }
+
+  function updateTabCounts(hosts) {
+    document.getElementById('count-all').textContent = hosts.length;
+    let pending = 0, approved = 0, rejected = 0, suspended = 0;
+
+    hosts.forEach(h => {
+      const vs = h.verificationStatus || 'pending';
+      if (vs === 'pending') pending++;
+      else if (vs === 'approved') approved++;
+      else if (vs === 'rejected') rejected++;
+      else if (vs === 'suspended') suspended++;
+    });
+
+    document.getElementById('count-pending').textContent = pending;
+    document.getElementById('count-approved').textContent = approved;
+    document.getElementById('count-rejected').textContent = rejected;
+    document.getElementById('count-suspended').textContent = suspended;
+  }
+
+  function applyFilters() {
+    const search = document.getElementById('search-input').value.toLowerCase().trim();
+    const typeFilter = document.getElementById('type-filter').value;
+
+    let filtered = allHostsData;
+
+    // Filter by Tab (verificationStatus)
+    if (activeTab) {
+      filtered = filtered.filter(h => (h.verificationStatus || 'pending') === activeTab);
+    }
+
+    // Filter by Host Type
+    if (typeFilter) {
+      filtered = filtered.filter(h => h.hostType === typeFilter);
+    }
+
+    // Search query
+    if (search) {
+      filtered = filtered.filter(h => {
+        const name = (h.userId?.name || '').toLowerCase();
+        const email = (h.userId?.email || '').toLowerCase();
+        const dept = (h.departmentId?.name || '').toLowerCase();
+        const desig = (h.designation || '').toLowerCase();
+        return name.includes(search) || email.includes(search) || dept.includes(search) || desig.includes(search);
+      });
+    }
+
+    renderHostsTable(filtered);
+  }
+
+  function renderHostsTable(hosts) {
+    const tbody = document.getElementById('hosts-tbody');
+    if (!hosts || hosts.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="7">
+            ${emptyState('👔', 'No Hosts Found', 'No host accounts match the current filter criteria.')}
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    tbody.innerHTML = hosts.map(host => {
+      const user = host.userId || {};
+      const deptOrClub = host.departmentId?.name || host.clubId?.name || 'Campus Wide';
+      const typeClass = `host-type-${host.hostType || 'faculty'}`;
+      const isPending = host.verificationStatus === 'pending';
+      const isApproved = host.verificationStatus === 'approved';
+      const isSuspended = host.verificationStatus === 'suspended';
+
+      return `
+        <tr>
+          <td>
+            <div class="user-cell">
+              ${avatarInitials(user.name || 'Host', 36)}
+              <div class="user-cell-info">
+                <div class="user-name">${escapeHtml(user.name || 'Unnamed')}</div>
+                <div class="user-sub">${escapeHtml(user.email || '')}</div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <span class="host-type-pill ${typeClass}">${host.hostType || 'Host'}</span>
+          </td>
+          <td>
+            <div style="font-weight:500;">${escapeHtml(deptOrClub)}</div>
+          </td>
+          <td>
+            <span style="font-size:0.85rem;color:var(--gray-600);">${escapeHtml(host.designation || 'Coordinator')}</span>
+          </td>
+          <td>
+            ${badge.hostStatus(host.verificationStatus)}
+          </td>
+          <td>
+            ${badge.accountStatus(user.status || 'active')}
+          </td>
+          <td style="text-align:right;">
+            <div style="display:inline-flex;gap:6px;align-items:center;">
+              <button class="btn btn-ghost btn-sm" onclick="viewHostDetails('${user._id}')" title="View host profile and past events">
+                Details
+              </button>
+
+              ${!isApproved ? `
+                <button class="btn btn-success btn-sm" onclick="updateHostVerification('${user._id}', 'approved', '${escapeHtml(user.name)}')" title="Approve Host">
+                  Approve
+                </button>
+              ` : ''}
+
+              ${isPending || isApproved ? `
+                <button class="btn btn-outline-danger btn-sm" onclick="updateHostVerification('${user._id}', 'rejected', '${escapeHtml(user.name)}')" title="Reject Host">
+                  Reject
+                </button>
+              ` : ''}
+
+              ${!isSuspended ? `
+                <button class="btn btn-light btn-sm" onclick="updateHostVerification('${user._id}', 'suspended', '${escapeHtml(user.name)}')" title="Suspend Host" style="color:var(--danger);">
+                  Suspend
+                </button>
+              ` : `
+                <button class="btn btn-outline btn-sm" onclick="updateHostVerification('${user._id}', 'approved', '${escapeHtml(user.name)}')" title="Re-instate Host">
+                  Re-instate
+                </button>
+              `}
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  async function updateHostVerification(userId, verificationStatus, hostName) {
+    const titles = {
+      approved: 'Approve Host Account',
+      rejected: 'Reject Host Account',
+      suspended: 'Suspend Host Account'
+    };
+    const messages = {
+      approved: `Approve host permissions for ${hostName}? They will be able to create and host campus events.`,
+      rejected: `Are you sure you want to reject ${hostName}'s host request?`,
+      suspended: `Suspend host privileges for ${hostName}? They will no longer be able to submit new events.`
+    };
+    const types = {
+      approved: 'success',
+      rejected: 'danger',
+      suspended: 'danger'
+    };
+
+    const confirmed = await modal.confirm({
+      title: titles[verificationStatus],
+      message: messages[verificationStatus],
+      confirmText: verificationStatus.toUpperCase(),
+      type: types[verificationStatus]
+    });
+
+    if (!confirmed) return;
+
+    loader.show();
+    try {
+      const payload = { verificationStatus };
+      if (verificationStatus === 'approved') payload.status = 'active';
+      if (verificationStatus === 'suspended') payload.status = 'suspended';
+
+      await api.admin.updateHostStatus(userId, payload);
+      toast.success(`Host status updated to ${verificationStatus}`);
+      await fetchHosts();
+    } catch (err) {
+      toast.error('Failed to update host status: ' + err.message);
+    } finally {
+      loader.hide();
+    }
+  }
+
+  async function viewHostDetails(userId) {
+    loader.show();
+    try {
+      const res = await api.admin.getHost(userId);
+      const data = res.data || {};
+      const profile = data.profile || {};
+      const user = profile.userId || {};
+      const events = data.events || [];
+
+      document.getElementById('modal-host-name').textContent = user.name || 'Unknown Host';
+      document.getElementById('modal-host-email').textContent = user.email || '';
+      document.getElementById('modal-host-avatar').textContent = (user.name || 'H')[0].toUpperCase();
+      document.getElementById('modal-host-type').innerHTML = `<span class="host-type-pill host-type-${profile.hostType || 'faculty'}">${profile.hostType || 'N/A'}</span>`;
+      document.getElementById('modal-host-affiliation').textContent = profile.departmentId?.name || profile.clubId?.name || 'Campus Wide';
+      document.getElementById('modal-host-designation').textContent = profile.designation || 'Not specified';
+      document.getElementById('modal-host-phone').textContent = profile.phone || 'Not specified';
+      document.getElementById('modal-host-verif-status').innerHTML = badge.hostStatus(profile.verificationStatus);
+      document.getElementById('modal-host-acc-status').innerHTML = badge.accountStatus(user.status || 'active');
+      document.getElementById('modal-host-bio').textContent = profile.description || 'No description provided.';
+
+      document.getElementById('modal-host-events-count').textContent = events.length;
+      const eventsContainer = document.getElementById('modal-host-events-list');
+
+      if (events.length === 0) {
+        eventsContainer.innerHTML = '<div style="padding:20px;text-align:center;color:var(--gray-400);">No events published by this host.</div>';
+      } else {
+        eventsContainer.innerHTML = events.map(evt => {
+          return `
+            <div class="hosted-event-item">
+              <div>
+                <div style="font-weight:600;color:var(--gray-900);font-size:0.88rem;">${escapeHtml(evt.title)}</div>
+                <div style="font-size:0.75rem;color:var(--gray-500);">Date: ${fmt.date(evt.date)} • ${evt.currentRegistrations || 0} participants</div>
+              </div>
+              <div style="display:flex;gap:6px;">
+                ${badge.approvalStatus(evt.approvalStatus)}
+                ${badge.eventStatus(evt.eventStatus)}
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      modal.show('host-modal');
+    } catch (err) {
+      toast.error('Failed to load host profile: ' + err.message);
+    } finally {
+      loader.hide();
+    }
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>"']/g, m => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    })[m]);
+  }
+</script>
+
+</body>
+</html>

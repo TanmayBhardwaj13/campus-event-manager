@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Event - Host Portal - Campus Event Manager</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/utils.js"></script>
+  <style>
+    .form-section {
+      background: #ffffff;
+      border-radius: var(--border-radius);
+      border: 1px solid var(--gray-200);
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow-sm);
+    }
+    .form-section-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--gray-800);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .form-section-subtitle {
+      font-size: 0.85rem;
+      color: var(--gray-500);
+      margin-bottom: 20px;
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .form-group label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--gray-700);
+    }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      padding: 10px 14px;
+      border: 1px solid var(--gray-300);
+      border-radius: var(--border-radius-sm);
+      font-size: 0.9rem;
+      font-family: inherit;
+      transition: border-color 0.15s ease;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: var(--primary-500);
+    }
+    .image-preview-container {
+      margin-top: 10px;
+      display: none;
+      border-radius: var(--border-radius-sm);
+      overflow: hidden;
+      max-height: 200px;
+      border: 1px solid var(--gray-200);
+    }
+    .image-preview-container img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar-overlay"></div>
+
+  <div class="dashboard-layout">
+    <!-- HOST SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-icon">🎟️</div>
+        <div class="sidebar-brand-text">
+          <div class="brand-name">CampusEvents</div>
+          <div class="brand-role">Host Portal</div>
+        </div>
+      </div>
+      <ul class="sidebar-nav" style="padding:12px">
+        <li><a href="dashboard.html"><span class="nav-icon">🏠</span> Dashboard</a></li>
+        <li><a href="events.html"><span class="nav-icon">📅</span> My Events</a></li>
+        <li><a href="create-event.html" class="active"><span class="nav-icon">➕</span> Create Event</a></li>
+        <li><a href="analytics.html"><span class="nav-icon">📊</span> Analytics</a></li>
+        <li><a href="profile.html"><span class="nav-icon">👤</span> Profile</a></li>
+      </ul>
+      <div class="sidebar-footer">
+        <div class="sidebar-user" onclick="window.location.href='profile.html'">
+          <div class="sidebar-user-avatar" id="sidebar-user-avatar">H</div>
+          <div class="sidebar-user-info">
+            <div class="sidebar-user-name" id="sidebar-user-name">Host</div>
+            <div class="sidebar-user-role" id="sidebar-user-role">host</div>
+          </div>
+        </div>
+        <button class="btn btn-ghost w-full" style="color:#94a3b8;margin-top:8px" onclick="auth.logoutRole('host')">Logout</button>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+      <header class="topbar">
+        <button class="topbar-menu-btn" id="sidebar-toggle" aria-label="Toggle navigation menu">☰</button>
+        <div>
+          <div class="topbar-title" id="page-title">Create Campus Event</div>
+          <div class="topbar-subtitle">Fill in the event information to publish or submit for administrative approval</div>
+        </div>
+        <div class="topbar-actions">
+          <a href="events.html" class="btn btn-outline btn-sm">Back to Events</a>
+        </div>
+      </header>
+
+      <div class="page-content">
+        <form id="event-form">
+          <!-- BASIC INFO -->
+          <div class="form-section">
+            <div class="form-section-title"><span>📋</span> Basic Information</div>
+            <div class="form-section-subtitle">Provide key details that describe your campus event to students</div>
+            
+            <div class="form-group" style="margin-bottom:16px;">
+              <label for="title">Event Title *</label>
+              <input type="text" id="title" name="title" required placeholder="e.g. Annual Hackathon 2024">
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="categoryId">Category *</label>
+                <select id="categoryId" name="categoryId" required>
+                  <option value="">Select category...</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="departmentId">Department (Optional)</label>
+                <select id="departmentId" name="departmentId">
+                  <option value="">None / Open to all</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="clubId">Organizing Club (Optional)</label>
+                <select id="clubId" name="clubId">
+                  <option value="">None</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="description">Event Description *</label>
+              <textarea id="description" name="description" rows="4" required placeholder="Describe objectives, schedule, agenda, speaker details, and highlights..."></textarea>
+            </div>
+          </div>
+
+          <!-- BANNER IMAGE -->
+          <div class="form-section">
+            <div class="form-section-title"><span>🖼️</span> Event Banner</div>
+            <div class="form-section-subtitle">Upload a promotional poster or image for your event (JPEG, PNG)</div>
+            
+            <div class="form-group">
+              <input type="file" id="image" name="image" accept="image/*">
+              <div class="image-preview-container" id="preview-box">
+                <img id="image-preview" src="" alt="Event Banner Preview">
+              </div>
+            </div>
+          </div>
+
+          <!-- VENUE -->
+          <div class="form-section">
+            <div class="form-section-title"><span>📍</span> Venue Location</div>
+            <div class="form-section-subtitle">Where will this event take place physically on campus?</div>
+            
+            <div class="form-row">
+              <div class="form-group">
+                <label for="building">Building / Complex</label>
+                <input type="text" id="building" name="building" placeholder="e.g. Tech Block, Main Auditorium">
+              </div>
+              <div class="form-group">
+                <label for="block">Block / Wing</label>
+                <input type="text" id="block" name="block" placeholder="e.g. Block A, West Wing">
+              </div>
+              <div class="form-group">
+                <label for="room">Room / Hall</label>
+                <input type="text" id="room" name="room" placeholder="e.g. Room 402, Seminar Hall 1">
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="venueDetails">Specific Venue Instructions / Map Reference</label>
+              <input type="text" id="venueDetails" name="venueDetails" placeholder="e.g. Next to Central Library, 2nd Floor">
+            </div>
+          </div>
+
+          <!-- SCHEDULE -->
+          <div class="form-section">
+            <div class="form-section-title"><span>⏰</span> Date & Timing</div>
+            <div class="form-section-subtitle">Define when the event begins, ends, and the registration cut-off</div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="date">Event Date *</label>
+                <input type="date" id="date" name="date" required>
+              </div>
+              <div class="form-group">
+                <label for="startTime">Start Time *</label>
+                <input type="time" id="startTime" name="startTime" required>
+              </div>
+              <div class="form-group">
+                <label for="endTime">End Time *</label>
+                <input type="time" id="endTime" name="endTime" required>
+              </div>
+              <div class="form-group">
+                <label for="registrationDeadline">Registration Deadline *</label>
+                <input type="date" id="registrationDeadline" name="registrationDeadline" required>
+              </div>
+            </div>
+          </div>
+
+          <!-- REGISTRATION & RULES -->
+          <div class="form-section">
+            <div class="form-section-title"><span>👥</span> Capacity & Participation Criteria</div>
+            <div class="form-section-subtitle">Manage enrollment limits, eligibility criteria, and event guidelines</div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="maxParticipants">Capacity (Max Participants) *</label>
+                <input type="number" id="maxParticipants" name="maxParticipants" min="1" value="50" required>
+              </div>
+              <div class="form-group">
+                <label for="eligibility">Eligibility Criteria</label>
+                <input type="text" id="eligibility" name="eligibility" placeholder="e.g. All Students, 3rd & 4th Year CSE">
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="rules">Rules & Guidelines</label>
+                <textarea id="rules" name="rules" rows="3" placeholder="e.g. Bring college ID, laptops required, team sizes..."></textarea>
+              </div>
+              <div class="form-group">
+                <label for="requirements">Prerequisites / Requirements</label>
+                <textarea id="requirements" name="requirements" rows="3" placeholder="e.g. Knowledge of basic Python, install VSCode..."></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- SUBMISSION BUTTONS -->
+          <div style="display:flex; justify-content:flex-end; gap:12px; margin-bottom:40px;">
+            <a href="events.html" class="btn btn-ghost">Cancel</a>
+            <button type="submit" class="btn btn-primary" id="save-btn">
+              <span id="save-btn-text">Save & Publish Event</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    let editEventId = null;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!auth.requireRole('host', '../host/login.html')) return;
+      auth.populateSidebarUser();
+      setActiveNavLink();
+      initSidebarToggle();
+
+      const urlParams = new URLSearchParams(window.location.search);
+      editEventId = urlParams.get('id');
+
+      if (editEventId) {
+        document.getElementById('page-title').textContent = 'Edit Event';
+        document.getElementById('save-btn-text').textContent = 'Update Event';
+      }
+
+      await loadDropdowns();
+
+      if (editEventId) {
+        await loadEventData(editEventId);
+      }
+
+      // Image preview listener
+      document.getElementById('image').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (evt) => {
+            document.getElementById('image-preview').src = evt.target.result;
+            document.getElementById('preview-box').style.display = 'block';
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+
+      // Form submission
+      document.getElementById('event-form').addEventListener('submit', handleSubmit);
+    });
+
+    async function loadDropdowns() {
+      try {
+        const [catsRes, deptsRes, clubsRes] = await Promise.all([
+          api.public.getCategories().catch(() => ({ data: [] })),
+          api.public.getDepartments().catch(() => ({ data: [] })),
+          api.public.getClubs().catch(() => ({ data: [] })),
+        ]);
+
+        const catSelect = document.getElementById('categoryId');
+        (catsRes.data || []).forEach(c => {
+          const opt = document.createElement('option');
+          opt.value = c._id;
+          opt.textContent = c.name;
+          catSelect.appendChild(opt);
+        });
+
+        const deptSelect = document.getElementById('departmentId');
+        (deptsRes.data || []).forEach(d => {
+          const opt = document.createElement('option');
+          opt.value = d._id;
+          opt.textContent = `${d.name} (${d.code})`;
+          deptSelect.appendChild(opt);
+        });
+
+        const clubSelect = document.getElementById('clubId');
+        (clubsRes.data || []).forEach(cl => {
+          const opt = document.createElement('option');
+          opt.value = cl._id;
+          opt.textContent = cl.name;
+          clubSelect.appendChild(opt);
+        });
+      } catch (err) {
+        console.error('Failed to load categories/departments:', err);
+      }
+    }
+
+    async function loadEventData(id) {
+      loader.show();
+      try {
+        const res = await api.public.getEvent(id);
+        const ev = res.data;
+        if (!ev) throw new Error('Event not found');
+
+        document.getElementById('title').value = ev.title || '';
+        document.getElementById('categoryId').value = ev.categoryId?._id || ev.categoryId || '';
+        document.getElementById('departmentId').value = ev.departmentId?._id || ev.departmentId || '';
+        document.getElementById('clubId').value = ev.clubId?._id || ev.clubId || '';
+        document.getElementById('description').value = ev.description || '';
+        document.getElementById('building').value = ev.building || '';
+        document.getElementById('block').value = ev.block || '';
+        document.getElementById('room').value = ev.room || '';
+        document.getElementById('venueDetails').value = ev.venueDetails || '';
+        if (ev.date) document.getElementById('date').value = ev.date.split('T')[0];
+        document.getElementById('startTime').value = ev.startTime || '';
+        document.getElementById('endTime').value = ev.endTime || '';
+        if (ev.registrationDeadline) document.getElementById('registrationDeadline').value = ev.registrationDeadline.split('T')[0];
+        document.getElementById('maxParticipants').value = ev.maxParticipants || 50;
+        document.getElementById('eligibility').value = ev.eligibility || '';
+        document.getElementById('rules').value = ev.rules || '';
+        document.getElementById('requirements').value = ev.requirements || '';
+
+        if (ev.image) {
+          document.getElementById('image-preview').src = imgUrl(ev.image);
+          document.getElementById('preview-box').style.display = 'block';
+        }
+      } catch (err) {
+        toast.error(err.message || 'Error loading event');
+      } finally {
+        loader.hide();
+      }
+    }
+
+    async function handleSubmit(e) {
+      e.preventDefault();
+      const saveBtn = document.getElementById('save-btn');
+      saveBtn.disabled = true;
+      loader.show();
+
+      try {
+        const formEl = document.getElementById('event-form');
+        const formData = new FormData(formEl);
+
+        const imageFile = document.getElementById('image').files[0];
+        if (!imageFile) {
+          formData.delete('image');
+        }
+
+        if (editEventId) {
+          await api.host.updateEvent(editEventId, formData, true);
+          toast.success('Event updated successfully!');
+        } else {
+          await api.host.createEvent(formData, true);
+          toast.success('Event created successfully!');
+        }
+
+        setTimeout(() => {
+          window.location.href = 'events.html';
+        }, 800);
+      } catch (err) {
+        toast.error(err.message || 'Failed to save event');
+        saveBtn.disabled = false;
+      } finally {
+        loader.hide();
+      }
+    }
+  </script>
+</body>
+</html>

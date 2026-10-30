@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Events | Campus Event Manager</title>
+  <meta name="description" content="View and manage your registered, attended, waitlisted, and cancelled campus events.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/utils.js"></script>
+  <style>
+    .my-events-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      margin-bottom: 32px;
+    }
+    .cancelled-card {
+      opacity: 0.75;
+      filter: grayscale(40%);
+      transition: var(--transition);
+    }
+    .cancelled-card:hover {
+      opacity: 0.95;
+      filter: grayscale(0%);
+    }
+    .countdown-pill {
+      position: absolute;
+      bottom: 12px;
+      left: 12px;
+      background: rgba(15, 23, 42, 0.85);
+      color: #38bdf8;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      backdrop-filter: blur(6px);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    @media (max-width: 1024px) {
+      .my-events-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    @media (max-width: 640px) {
+      .my-events-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="sidebar-overlay"></div>
+
+  <div class="dashboard-layout">
+    <!-- STUDENT SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-icon">🎓</div>
+        <div class="sidebar-brand-text">
+          <div class="brand-name">CampusEvents</div>
+          <div class="brand-role">Student Portal</div>
+        </div>
+      </div>
+      <ul class="sidebar-nav" style="padding:12px">
+        <li><a href="dashboard.html"><span class="nav-icon">🏠</span> Dashboard</a></li>
+        <li><a href="events.html"><span class="nav-icon">🔍</span> Discover Events</a></li>
+        <li><a href="my-events.html"><span class="nav-icon">📅</span> My Events</a></li>
+        <li><a href="saved.html"><span class="nav-icon">📌</span> Saved Events</a></li>
+        <li><a href="activity.html"><span class="nav-icon">⏱️</span> Activity</a></li>
+        <li><a href="certificates.html"><span class="nav-icon">🎓</span> Certificates</a></li>
+        <li><a href="notifications.html"><span class="nav-icon">🔔</span> Notifications <span class="nav-badge" id="notif-count" style="display:none">0</span></a></li>
+        <li><a href="profile.html"><span class="nav-icon">👤</span> Profile</a></li>
+      </ul>
+      <div class="sidebar-footer">
+        <div class="sidebar-user">
+          <div class="sidebar-user-avatar" id="sidebar-user-avatar">S</div>
+          <div class="sidebar-user-info">
+            <div class="sidebar-user-name" id="sidebar-user-name">Student</div>
+            <div class="sidebar-user-role" id="sidebar-user-role">student</div>
+          </div>
+        </div>
+        <button class="btn btn-ghost w-full" style="color:#94a3b8;margin-top:8px" onclick="auth.logoutRole('student')">Logout</button>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+      <!-- TOPBAR -->
+      <header class="topbar">
+        <button class="topbar-menu-btn" id="sidebar-toggle" aria-label="Toggle navigation">☰</button>
+        <div>
+          <div class="topbar-title">My Registered Events</div>
+          <div class="topbar-subtitle">Track your schedule, attendance, and registration statuses</div>
+        </div>
+        <div class="topbar-actions">
+          <a href="events.html" class="btn btn-primary btn-sm"><span>🔍</span> Discover Events</a>
+          <a href="notifications.html" class="topbar-icon-btn notif-bell" title="Notifications">
+            🔔
+            <span class="notif-badge" id="topbar-notif-badge" style="display:none">0</span>
+          </a>
+          <a href="profile.html" class="topbar-icon-btn" title="My Profile">👤</a>
+        </div>
+      </header>
+
+      <!-- PAGE CONTENT -->
+      <div class="page-content">
+
+        <!-- Tabs Navigation -->
+        <div class="tabs">
+          <button class="tab-btn active" data-tab="upcoming">
+            <span>📅 Upcoming</span>
+            <span class="tab-count" id="count-upcoming">0</span>
+          </button>
+          <button class="tab-btn" data-tab="attended">
+            <span>🎯 Attended</span>
+            <span class="tab-count" id="count-attended">0</span>
+          </button>
+          <button class="tab-btn" data-tab="waitlisted">
+            <span>⏳ Waitlisted</span>
+            <span class="tab-count" id="count-waitlisted">0</span>
+          </button>
+          <button class="tab-btn" data-tab="cancelled">
+            <span>❌ Cancelled</span>
+            <span class="tab-count" id="count-cancelled">0</span>
+          </button>
+        </div>
+
+        <!-- Grid Container for Selected Tab -->
+        <div id="tab-events-grid" class="my-events-grid">
+          <div class="skeleton" style="height:320px;border-radius:var(--border-radius);"></div>
+          <div class="skeleton" style="height:320px;border-radius:var(--border-radius);"></div>
+          <div class="skeleton" style="height:320px;border-radius:var(--border-radius);"></div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script>
+    let currentTab = 'upcoming';
+    let allRegistrations = [];
+
+    // Filter registrations according to tab
+    function getFilteredRegistrations(tab) {
+      if (tab === 'upcoming') {
+        return allRegistrations.filter(r => 
+          r.status === 'registered' && 
+          r.attendanceStatus !== 'present' &&
+          r.eventId && r.eventId.eventStatus !== 'completed' && r.eventId.eventStatus !== 'cancelled'
+        );
+      }
+      if (tab === 'attended') {
+        return allRegistrations.filter(r => 
+          r.attendanceStatus === 'present' || 
+          (r.status === 'registered' && r.eventId && r.eventId.eventStatus === 'completed')
+        );
+      }
+      if (tab === 'waitlisted') {
+        return allRegistrations.filter(r => r.status === 'waitlisted');
+      }
+      if (tab === 'cancelled') {
+        return allRegistrations.filter(r => r.status === 'cancelled');
+      }
+      return [];
+    }
+
+    // Render cards based on active tab
+    function renderCardForTab(reg, tab) {
+      const event = reg.eventId;
+      if (!event) return '';
+
+      const imgHtml = event.image 
+        ? `<img src="${imgUrl(event.image)}" alt="${event.title}" onerror="this.parentElement.style.background='linear-gradient(135deg,#eef2ff,#e0f2fe)'; this.style.display='none';">`
+        : '';
+      const catStyle = event.categoryId?.color ? `background:${event.categoryId.color}20;color:${event.categoryId.color}` : '';
+      const timeLeft = fmt.timeLeft(event.date);
+
+      // Tab: Upcoming
+      if (tab === 'upcoming') {
+        return `
+          <div class="event-card">
+            <div class="event-card-image" style="${!event.image ? 'background:linear-gradient(135deg,#eef2ff,#f0f9ff)' : ''}">
+              ${imgHtml}
+              <div class="event-date-badge">${fmt.shortDate(event.date)}</div>
+              ${timeLeft ? `<div class="countdown-pill">⏰ ${timeLeft}</div>` : ''}
+            </div>
+            <div class="event-card-body">
+              <div class="event-card-category"><span class="badge" style="${catStyle}">${event.categoryId?.name || 'Event'}</span></div>
+              <div class="event-card-title">${event.title}</div>
+              <div class="event-card-meta">
+                <span>📅 ${fmt.date(event.date)} &bull; ${event.startTime || ''} ${event.endTime ? '- ' + event.endTime : ''}</span>
+                <span>📍 ${event.building || 'Campus'} ${event.room ? '- ' + event.room : ''}</span>
+                <span>👥 ${event.departmentId?.name || event.hostId?.name || 'College Host'}</span>
+              </div>
+              <div style="margin-top:8px;">
+                <span class="badge badge-success">✅ Confirmed Seat</span>
+              </div>
+            </div>
+            <div class="event-card-footer">
+              <button class="btn btn-outline-danger btn-sm" onclick="cancelSeat('${event._id}', '${event.title.replace(/'/g, "\\'")}')">Cancel Registration</button>
+              <a href="../events/detail.html?id=${event._id}" class="btn btn-primary btn-sm">Details</a>
+            </div>
+          </div>
+        `;
+      }
+
+      // Tab: Attended
+      if (tab === 'attended') {
+        return `
+          <div class="event-card" style="border-top: 3px solid var(--success);">
+            <div class="event-card-image" style="${!event.image ? 'background:linear-gradient(135deg,#eef2ff,#f0f9ff)' : ''}">
+              ${imgHtml}
+              <div class="event-date-badge">${fmt.shortDate(event.date)}</div>
+              <div style="position:absolute;bottom:12px;left:12px;">
+                <span class="badge badge-success" style="box-shadow:0 2px 6px rgba(0,0,0,0.2)">🎯 Attendance Verified</span>
+              </div>
+            </div>
+            <div class="event-card-body">
+              <div class="event-card-category"><span class="badge" style="${catStyle}">${event.categoryId?.name || 'Event'}</span></div>
+              <div class="event-card-title">${event.title}</div>
+              <div class="event-card-meta">
+                <span>📅 Completed on ${fmt.date(event.date)}</span>
+                <span>📍 ${event.building || 'Campus Center'}</span>
+                <span>👥 ${event.departmentId?.name || 'College Host'}</span>
+              </div>
+            </div>
+            <div class="event-card-footer">
+              <a href="certificates.html" class="btn btn-outline btn-sm">View Certificate 🎓</a>
+              <a href="../events/detail.html?id=${event._id}" class="btn btn-ghost btn-sm">Event Recap</a>
+            </div>
+          </div>
+        `;
+      }
+
+      // Tab: Waitlisted
+      if (tab === 'waitlisted') {
+        return `
+          <div class="event-card" style="border-top: 3px solid var(--warning);">
+            <div class="event-card-image" style="${!event.image ? 'background:linear-gradient(135deg,#eef2ff,#f0f9ff)' : ''}">
+              ${imgHtml}
+              <div class="event-date-badge">${fmt.shortDate(event.date)}</div>
+              <div style="position:absolute;bottom:12px;left:12px;">
+                <span class="badge badge-warning" style="box-shadow:0 2px 6px rgba(0,0,0,0.2)">⌛ On Waitlist</span>
+              </div>
+            </div>
+            <div class="event-card-body">
+              <div class="event-card-category"><span class="badge" style="${catStyle}">${event.categoryId?.name || 'Event'}</span></div>
+              <div class="event-card-title">${event.title}</div>
+              <div class="event-card-meta">
+                <span>📅 ${fmt.date(event.date)} &bull; ${event.startTime || ''}</span>
+                <span>📍 ${event.building || 'Campus'}</span>
+              </div>
+              <div style="margin-top:10px;padding:8px 10px;background:var(--warning-bg);border-radius:6px;font-size:0.78rem;color:var(--warning-dark);">
+                ℹ️ You will be automatically moved to a confirmed seat if another attendee cancels.
+              </div>
+            </div>
+            <div class="event-card-footer">
+              <button class="btn btn-outline-danger btn-sm" onclick="cancelSeat('${event._id}', '${event.title.replace(/'/g, "\\'")}')">Leave Waitlist</button>
+              <a href="../events/detail.html?id=${event._id}" class="btn btn-ghost btn-sm">Details</a>
+            </div>
+          </div>
+        `;
+      }
+
+      // Tab: Cancelled
+      if (tab === 'cancelled') {
+        return `
+          <div class="event-card cancelled-card">
+            <div class="event-card-image" style="${!event.image ? 'background:linear-gradient(135deg,#eef2ff,#f0f9ff)' : ''}">
+              ${imgHtml}
+              <div class="event-date-badge">${fmt.shortDate(event.date)}</div>
+              <div style="position:absolute;bottom:12px;left:12px;">
+                <span class="badge badge-danger">Cancelled</span>
+              </div>
+            </div>
+            <div class="event-card-body">
+              <div class="event-card-category"><span class="badge badge-gray">${event.categoryId?.name || 'Event'}</span></div>
+              <div class="event-card-title">${event.title}</div>
+              <div class="event-card-meta">
+                <span>📅 ${fmt.date(event.date)}</span>
+                <span>📍 ${event.building || 'Campus'}</span>
+              </div>
+            </div>
+            <div class="event-card-footer">
+              <button class="btn btn-outline btn-sm" onclick="reRegisterSeat('${event._id}')">Re-Register</button>
+              <a href="../events/detail.html?id=${event._id}" class="btn btn-ghost btn-sm">Details</a>
+            </div>
+          </div>
+        `;
+      }
+
+      return '';
+    }
+
+    // Render tab content
+    function renderActiveTab() {
+      const container = document.getElementById('tab-events-grid');
+      const items = getFilteredRegistrations(currentTab);
+
+      if (items.length === 0) {
+        let emptyDetails = {
+          upcoming: { icon: '📅', title: 'No Upcoming Events', sub: 'You have no events on your calendar right now.' },
+          attended: { icon: '🎯', title: 'No Attended Events Yet', sub: 'Attend workshops and events to earn attendance records and certificates.' },
+          waitlisted: { icon: '⏳', title: 'No Waitlisted Events', sub: 'You are not currently queued on any waitlists.' },
+          cancelled: { icon: '✨', title: 'No Cancelled Events', sub: 'You haven\'t cancelled any event registrations.' },
+        }[currentTab];
+
+        container.innerHTML = `
+          <div style="grid-column: 1 / -1;background:#fff;border-radius:var(--border-radius);border:1px dashed var(--gray-300);padding:48px 20px;text-align:center;">
+            ${emptyState(emptyDetails.icon, emptyDetails.title, emptyDetails.sub, '<a href="events.html" class="btn btn-primary btn-sm">Browse All Events</a>')}
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = items.map(reg => renderCardForTab(reg, currentTab)).join('');
+    }
+
+    // Cancel registration handler
+    async function cancelSeat(eventId, eventTitle) {
+      const confirmed = await modal.confirm({
+        title: 'Cancel Registration?',
+        message: `Are you sure you want to cancel your seat for "${eventTitle}"?`,
+        confirmText: 'Yes, Cancel',
+        cancelText: 'Keep Seat',
+        type: 'danger'
+      });
+
+      if (!confirmed) return;
+
+      loader.show();
+      try {
+        const res = await api.student.cancelRegistration(eventId);
+        toast.success(res.message || 'Registration cancelled.');
+        await loadMyEvents();
+      } catch (err) {
+        toast.error(err.message || 'Failed to cancel registration.');
+      } finally {
+        loader.hide();
+      }
+    }
+
+    // Re-register cancelled registration
+    async function reRegisterSeat(eventId) {
+      loader.show();
+      try {
+        const res = await api.student.registerForEvent(eventId);
+        toast.success(res.message || 'Re-registered successfully!');
+        await loadMyEvents();
+      } catch (err) {
+        toast.error(err.message || 'Failed to re-register.');
+      } finally {
+        loader.hide();
+      }
+    }
+
+    // Load data from API
+    async function loadMyEvents() {
+      try {
+        const res = await api.student.getMyEvents();
+        allRegistrations = res.data || [];
+
+        // Update tab counts
+        document.getElementById('count-upcoming').textContent = getFilteredRegistrations('upcoming').length;
+        document.getElementById('count-attended').textContent = getFilteredRegistrations('attended').length;
+        document.getElementById('count-waitlisted').textContent = getFilteredRegistrations('waitlisted').length;
+        document.getElementById('count-cancelled').textContent = getFilteredRegistrations('cancelled').length;
+
+        renderActiveTab();
+      } catch (err) {
+        console.error('Failed to load my events:', err);
+        toast.error('Unable to retrieve your events.');
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!auth.requireRole('student', '../student/login.html')) return;
+      auth.populateSidebarUser();
+      setActiveNavLink();
+      initSidebarToggle();
+
+      // Tab switcher
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          currentTab = btn.getAttribute('data-tab');
+          renderActiveTab();
+        });
+      });
+
+      await loadMyEvents();
+    });
+  </script>
+</body>
+</html>

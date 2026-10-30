@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Saved Events | Campus Event Manager</title>
+  <meta name="description" content="View and manage your bookmarked campus events and register before spots fill up.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/utils.js"></script>
+  <style>
+    .saved-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      margin-bottom: 32px;
+    }
+    .saved-pill {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      background: rgba(255, 255, 255, 0.95);
+      color: var(--primary);
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      backdrop-filter: blur(6px);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    @media (max-width: 1024px) {
+      .saved-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    @media (max-width: 640px) {
+      .saved-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="sidebar-overlay"></div>
+
+  <div class="dashboard-layout">
+    <!-- STUDENT SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-icon">🎓</div>
+        <div class="sidebar-brand-text">
+          <div class="brand-name">CampusEvents</div>
+          <div class="brand-role">Student Portal</div>
+        </div>
+      </div>
+      <ul class="sidebar-nav" style="padding:12px">
+        <li><a href="dashboard.html"><span class="nav-icon">🏠</span> Dashboard</a></li>
+        <li><a href="events.html"><span class="nav-icon">🔍</span> Discover Events</a></li>
+        <li><a href="my-events.html"><span class="nav-icon">📅</span> My Events</a></li>
+        <li><a href="saved.html"><span class="nav-icon">📌</span> Saved Events</a></li>
+        <li><a href="activity.html"><span class="nav-icon">⏱️</span> Activity</a></li>
+        <li><a href="certificates.html"><span class="nav-icon">🎓</span> Certificates</a></li>
+        <li><a href="notifications.html"><span class="nav-icon">🔔</span> Notifications <span class="nav-badge" id="notif-count" style="display:none">0</span></a></li>
+        <li><a href="profile.html"><span class="nav-icon">👤</span> Profile</a></li>
+      </ul>
+      <div class="sidebar-footer">
+        <div class="sidebar-user">
+          <div class="sidebar-user-avatar" id="sidebar-user-avatar">S</div>
+          <div class="sidebar-user-info">
+            <div class="sidebar-user-name" id="sidebar-user-name">Student</div>
+            <div class="sidebar-user-role" id="sidebar-user-role">student</div>
+          </div>
+        </div>
+        <button class="btn btn-ghost w-full" style="color:#94a3b8;margin-top:8px" onclick="auth.logoutRole('student')">Logout</button>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+      <!-- TOPBAR -->
+      <header class="topbar">
+        <button class="topbar-menu-btn" id="sidebar-toggle" aria-label="Toggle navigation">☰</button>
+        <div>
+          <div class="topbar-title">Saved Events</div>
+          <div class="topbar-subtitle">Your personal wishlist of bookmarked campus activities</div>
+        </div>
+        <div class="topbar-actions">
+          <a href="events.html" class="btn btn-primary btn-sm"><span>🔍</span> Discover More</a>
+          <a href="notifications.html" class="topbar-icon-btn notif-bell" title="Notifications">
+            🔔
+            <span class="notif-badge" id="topbar-notif-badge" style="display:none">0</span>
+          </a>
+          <a href="profile.html" class="topbar-icon-btn" title="My Profile">👤</a>
+        </div>
+      </header>
+
+      <!-- PAGE CONTENT -->
+      <div class="page-content">
+
+        <div class="page-header">
+          <div class="page-header-left">
+            <h2>Bookmarked Events (<span id="saved-count">0</span>)</h2>
+            <p>Don't miss registration deadlines for your saved campus events.</p>
+          </div>
+        </div>
+
+        <!-- Saved Events Grid -->
+        <div id="saved-events-grid" class="saved-grid">
+          <div class="skeleton" style="height:320px;border-radius:var(--border-radius);"></div>
+          <div class="skeleton" style="height:320px;border-radius:var(--border-radius);"></div>
+          <div class="skeleton" style="height:320px;border-radius:var(--border-radius);"></div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script>
+    let registeredIds = new Set();
+
+    function renderSavedCard(savedItem) {
+      const event = savedItem.eventId;
+      if (!event) return '';
+
+      const isRegistered = registeredIds.has(event._id);
+      const imgHtml = event.image 
+        ? `<img src="${imgUrl(event.image)}" alt="${event.title}" onerror="this.parentElement.style.background='linear-gradient(135deg,#eef2ff,#e0f2fe)'; this.style.display='none';">`
+        : '';
+      const catStyle = event.categoryId?.color ? `background:${event.categoryId.color}20;color:${event.categoryId.color}` : '';
+      const seatsLeft = Math.max(0, (event.maxParticipants || 0) - (event.currentRegistrations || 0));
+      const isFull = event.maxParticipants > 0 && event.currentRegistrations >= event.maxParticipants;
+      const isPast = event.registrationDeadline && new Date() > new Date(event.registrationDeadline);
+
+      let regBtn = '';
+      if (isRegistered) {
+        regBtn = `<span class="badge badge-success">Registered ✓</span>`;
+      } else if (isPast) {
+        regBtn = `<span class="badge badge-gray">Deadline Expired</span>`;
+      } else {
+        regBtn = `<button class="btn ${isFull ? 'btn-warning' : 'btn-primary'} btn-sm" onclick="registerFromSaved('${event._id}')">${isFull ? 'Waitlist' : 'Register'}</button>`;
+      }
+
+      return `
+        <div class="event-card" id="saved-card-${event._id}">
+          <div class="event-card-image" style="${!event.image ? 'background:linear-gradient(135deg,#eef2ff,#f0f9ff)' : ''}">
+            ${imgHtml}
+            <div class="saved-pill">📌 Saved</div>
+            <div class="event-date-badge">${fmt.shortDate(event.date)}</div>
+          </div>
+          <div class="event-card-body">
+            <div class="event-card-category"><span class="badge" style="${catStyle}">${event.categoryId?.name || 'Event'}</span></div>
+            <div class="event-card-title">${event.title}</div>
+            <div class="event-card-meta">
+              <span>📅 ${fmt.date(event.date)} &bull; ${event.startTime || ''} ${event.endTime ? '- ' + event.endTime : ''}</span>
+              <span>📍 ${event.building || 'Campus'} ${event.room ? '- ' + event.room : ''}</span>
+              <span>👥 ${event.departmentId?.name || 'College Host'}</span>
+            </div>
+            <div style="margin-bottom:8px">${progressBar(event.currentRegistrations || 0, event.maxParticipants || 0)}</div>
+          </div>
+          <div class="event-card-footer">
+            <button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="removeSavedEvent('${event._id}')" title="Remove from saved">
+              Remove 📌
+            </button>
+            <div style="display:flex;gap:6px;align-items:center;">
+              ${regBtn}
+              <a href="../events/detail.html?id=${event._id}" class="btn btn-ghost btn-sm" title="Details">&rarr;</a>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    async function removeSavedEvent(eventId) {
+      loader.show();
+      try {
+        await api.student.unsaveEvent(eventId);
+        toast.info('Event removed from saved');
+        await loadSavedEvents();
+      } catch (err) {
+        toast.error(err.message || 'Failed to remove saved event.');
+      } finally {
+        loader.hide();
+      }
+    }
+
+    async function registerFromSaved(eventId) {
+      loader.show();
+      try {
+        const res = await api.student.registerForEvent(eventId);
+        toast.success(res.message || 'Registration successful!');
+        registeredIds.add(eventId);
+        await loadSavedEvents();
+      } catch (err) {
+        toast.error(err.message || 'Failed to register.');
+      } finally {
+        loader.hide();
+      }
+    }
+
+    async function loadSavedEvents() {
+      const grid = document.getElementById('saved-events-grid');
+      const countEl = document.getElementById('saved-count');
+
+      try {
+        // First get user registered events to display correct registration badge
+        try {
+          const myRegs = await api.student.getMyEvents();
+          if (myRegs && myRegs.data) {
+            registeredIds.clear();
+            myRegs.data.forEach(r => {
+              if (r.status === 'registered' && r.eventId?._id) {
+                registeredIds.add(r.eventId._id);
+              }
+            });
+          }
+        } catch (e) {}
+
+        const res = await api.student.getSavedEvents();
+        const savedList = res.data || [];
+        countEl.textContent = savedList.length;
+
+        if (savedList.length === 0) {
+          grid.innerHTML = `
+            <div style="grid-column: 1 / -1;background:#fff;border-radius:var(--border-radius);border:1px dashed var(--gray-300);padding:48px 20px;text-align:center;">
+              ${emptyState('📌', 'No Saved Events Yet', 'Save events to find them later and ensure you don\'t miss registration deadlines.', '<a href="events.html" class="btn btn-primary btn-sm">Explore Upcoming Events</a>')}
+            </div>
+          `;
+          return;
+        }
+
+        grid.innerHTML = savedList.map(item => renderSavedCard(item)).join('');
+      } catch (err) {
+        console.error('Failed to load saved events:', err);
+        grid.innerHTML = `
+          <div style="grid-column:1 / -1;background:#fff;border-radius:var(--border-radius);padding:40px;text-align:center;">
+            ${emptyState('⚠️', 'Error loading saved events', 'Please check your connection and try again.')}
+          </div>
+        `;
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!auth.requireRole('student', '../student/login.html')) return;
+      auth.populateSidebarUser();
+      setActiveNavLink();
+      initSidebarToggle();
+      await loadSavedEvents();
+    });
+  </script>
+</body>
+</html>

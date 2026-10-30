@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Login | Campus Event Manager</title>
+  <meta name="description" content="Log in to Campus Event Manager Student Portal to explore campus events, track registrations, and earn certificates.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/utils.js"></script>
+  <style>
+    .auth-split-container {
+      display: flex;
+      min-height: 100vh;
+      width: 100%;
+    }
+    .auth-banner-pane {
+      flex: 1.1;
+      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 35%, #312e81 70%, #4338ca 100%);
+      color: #fff;
+      padding: 60px 48px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+    }
+    .auth-banner-pane::before {
+      content: '';
+      position: absolute;
+      top: -120px;
+      right: -120px;
+      width: 400px;
+      height: 400px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(139, 92, 246, 0.25) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .auth-banner-pane::after {
+      content: '';
+      position: absolute;
+      bottom: -100px;
+      left: -100px;
+      width: 350px;
+      height: 350px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(14, 165, 233, 0.2) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .auth-brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      position: relative;
+      z-index: 2;
+    }
+    .auth-brand-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.75rem;
+      box-shadow: 0 8px 24px rgba(79, 70, 229, 0.4);
+    }
+    .auth-brand-title {
+      font-size: 1.35rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #fff;
+      line-height: 1.2;
+    }
+    .auth-brand-tag {
+      font-size: 0.75rem;
+      color: var(--primary-light);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      font-weight: 700;
+    }
+    .auth-banner-content {
+      position: relative;
+      z-index: 2;
+      max-width: 520px;
+      margin: 40px 0;
+    }
+    .auth-banner-headline {
+      font-size: 2.25rem;
+      font-weight: 800;
+      line-height: 1.25;
+      color: #fff;
+      margin-bottom: 16px;
+    }
+    .auth-banner-headline span {
+      background: linear-gradient(135deg, #a5b4fc, #38bdf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .auth-banner-sub {
+      font-size: 1rem;
+      color: #cbd5e1;
+      line-height: 1.6;
+      margin-bottom: 32px;
+    }
+    .auth-feature-list {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+    .auth-feature-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(8px);
+      padding: 14px 18px;
+      border-radius: var(--border-radius);
+      transition: transform 0.2s ease, background 0.2s ease;
+    }
+    .auth-feature-item:hover {
+      background: rgba(255, 255, 255, 0.1);
+      transform: translateX(4px);
+    }
+    .auth-feature-check {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--success);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      font-weight: 700;
+      flex-shrink: 0;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+    .auth-feature-text h4 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 2px;
+    }
+    .auth-feature-text p {
+      font-size: 0.82rem;
+      color: #94a3b8;
+      line-height: 1.4;
+      margin: 0;
+    }
+    .auth-banner-footer {
+      font-size: 0.82rem;
+      color: #64748b;
+      position: relative;
+      z-index: 2;
+    }
+
+    .auth-form-pane {
+      flex: 1;
+      background: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 24px;
+      position: relative;
+    }
+    .auth-form-wrapper {
+      width: 100%;
+      max-width: 440px;
+    }
+    .auth-back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--gray-500);
+      margin-bottom: 28px;
+      transition: color 0.2s ease;
+    }
+    .auth-back-link:hover {
+      color: var(--primary);
+    }
+    .auth-form-header {
+      margin-bottom: 28px;
+    }
+    .auth-form-header h1 {
+      font-size: 1.85rem;
+      font-weight: 800;
+      color: var(--gray-900);
+      margin-bottom: 6px;
+      letter-spacing: -0.02em;
+    }
+    .auth-form-header p {
+      font-size: 0.95rem;
+      color: var(--gray-500);
+    }
+    .password-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .password-toggle-btn {
+      position: absolute;
+      right: 12px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--gray-400);
+      font-size: 1.1rem;
+      padding: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.2s ease;
+    }
+    .password-toggle-btn:hover {
+      color: var(--gray-700);
+    }
+    .form-options {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      font-size: 0.85rem;
+    }
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--gray-600);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    @media (max-width: 960px) {
+      .auth-split-container {
+        flex-direction: column;
+      }
+      .auth-banner-pane {
+        padding: 36px 24px;
+        flex: none;
+      }
+      .auth-banner-headline {
+        font-size: 1.75rem;
+      }
+      .auth-feature-list {
+        display: none;
+      }
+      .auth-banner-sub {
+        margin-bottom: 0;
+      }
+      .auth-form-pane {
+        padding: 36px 20px 48px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="auth-split-container">
+    <!-- Left Hero Pane -->
+    <div class="auth-banner-pane">
+      <div class="auth-brand">
+        <div class="auth-brand-icon">🎓</div>
+        <div>
+          <div class="auth-brand-title">CampusEvents</div>
+          <div class="auth-brand-tag">Student Experience Portal</div>
+        </div>
+      </div>
+
+      <div class="auth-banner-content">
+        <div class="auth-banner-headline">
+          Ignite your passions with <span>every campus event</span>.
+        </div>
+        <p class="auth-banner-sub">
+          Your all-in-one digital pass to discover workshops, inter-college hackathons, cultural festivals, sports tourneys, and earn validated achievements.
+        </p>
+
+        <div class="auth-feature-list">
+          <div class="auth-feature-item">
+            <div class="auth-feature-check">✓</div>
+            <div class="auth-feature-text">
+              <h4>Real-Time Event Discovery</h4>
+              <p>Explore verified events organized by campus clubs, departments, and societies.</p>
+            </div>
+          </div>
+          <div class="auth-feature-item">
+            <div class="auth-feature-check">✓</div>
+            <div class="auth-feature-text">
+              <h4>1-Click Registration & Reminders</h4>
+              <p>Reserve your seat instantly with automated waitlist elevation and calendar alerts.</p>
+            </div>
+          </div>
+          <div class="auth-feature-item">
+            <div class="auth-feature-check">✓</div>
+            <div class="auth-feature-text">
+              <h4>Verified Digital Certificates</h4>
+              <p>Download official credentials backed by faculty coordinators to boost your CV.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="auth-banner-footer">
+        &copy; 2026 Campus Event Management System &bull; All Rights Reserved
+      </div>
+    </div>
+
+    <!-- Right Form Pane -->
+    <div class="auth-form-pane">
+      <div class="auth-form-wrapper">
+        <a href="../index.html" class="auth-back-link">
+          <span>&larr;</span> Back to Home
+        </a>
+
+        <div class="auth-form-header">
+          <h1>Welcome Back!</h1>
+          <p>Sign in to your student account to continue</p>
+        </div>
+
+        <form id="login-form">
+          <div class="form-group">
+            <label for="email" class="form-label">College Email <span class="required">*</span></label>
+            <input 
+              type="email" 
+              id="email" 
+              class="form-control" 
+              placeholder="your.id@student.college.edu" 
+              required 
+              autocomplete="email"
+            >
+          </div>
+
+          <div class="form-group">
+            <label for="password" class="form-label">Password <span class="required">*</span></label>
+            <div class="password-wrapper">
+              <input 
+                type="password" 
+                id="password" 
+                class="form-control" 
+                placeholder="Enter your password" 
+                required 
+                autocomplete="current-password"
+                style="padding-right: 42px;"
+              >
+              <button 
+                type="button" 
+                id="toggle-password" 
+                class="password-toggle-btn" 
+                aria-label="Toggle password visibility"
+              >
+                👁️
+              </button>
+            </div>
+          </div>
+
+          <div class="form-options">
+            <label class="checkbox-label">
+              <input type="checkbox" id="remember-me" checked>
+              <span>Remember me</span>
+            </label>
+            <a href="mailto:support@campus.edu?subject=Student%20Password%20Reset" class="text-primary font-medium" style="font-size:0.85rem">Forgot password?</a>
+          </div>
+
+          <button type="submit" id="submit-btn" class="btn btn-gradient btn-lg w-full mb-4">
+            <span id="btn-text">Sign In to Student Portal</span>
+            <span id="btn-spinner" class="spinner" style="width:20px;height:20px;border-width:2px;display:none;margin-left:8px;"></span>
+          </button>
+
+          <div class="text-center" style="font-size:0.9rem; color:var(--gray-600)">
+            Don't have an account? 
+            <a href="register.html" class="text-primary font-semibold hover-underline">Register here</a>
+          </div>
+
+          <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--gray-200); text-align: center;">
+            <span class="text-xs text-muted">Are you a club or department coordinator?</span><br>
+            <a href="../host/login.html" class="text-xs font-semibold text-primary" style="margin-top:4px; display:inline-block">Host Login &rarr;</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // If already logged in as student, redirect to dashboard
+      if (auth.isLoggedIn() && auth.getRole() === 'student') {
+        window.location.href = 'dashboard.html';
+        return;
+      }
+
+      const form = document.getElementById('login-form');
+      const emailInput = document.getElementById('email');
+      const passwordInput = document.getElementById('password');
+      const toggleBtn = document.getElementById('toggle-password');
+      const submitBtn = document.getElementById('submit-btn');
+      const btnText = document.getElementById('btn-text');
+      const btnSpinner = document.getElementById('btn-spinner');
+
+      // Password visibility toggle
+      toggleBtn.addEventListener('click', () => {
+        const isPassword = passwordInput.getAttribute('type') === 'password';
+        passwordInput.setAttribute('type', isPassword ? 'text' : 'password');
+        toggleBtn.textContent = isPassword ? '🙈' : '👁️';
+      });
+
+      // Handle form submission
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const email = emailInput.value.trim();
+        const password = passwordInput.value;
+
+        if (!email || !password) {
+          toast.error('Please enter both email and password.');
+          return;
+        }
+
+        // Set loading state
+        submitBtn.disabled = true;
+        btnText.textContent = 'Authenticating...';
+        btnSpinner.style.display = 'inline-block';
+
+        try {
+          const res = await api.auth.loginStudent({ email, password });
+          if (res && res.token && res.user) {
+            auth.setSession(res.token, res.user);
+            toast.success(`Welcome back, ${res.user.name}!`);
+            setTimeout(() => {
+              window.location.href = 'dashboard.html';
+            }, 600);
+          } else {
+            throw new Error(res.message || 'Login failed. Please check your credentials.');
+          }
+        } catch (err) {
+          console.error('Student login error:', err);
+          toast.error(err.message || 'Failed to sign in. Please verify your credentials.');
+          submitBtn.disabled = false;
+          btnText.textContent = 'Sign In to Student Portal';
+          btnSpinner.style.display = 'none';
+        }
+      });
+    });
+  </script>
+</body>
+</html>
