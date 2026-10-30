@@ -20,7 +20,10 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(express.static(path.join(__dirname, '..', 'frontend')));
 
 const PORT = process.env.PORT || 5000;
-const MONGODB_URI = process.env.MONGODB_URI;
+let MONGODB_URI = (process.env.MONGODB_URI || '').trim().replace(/^["']|["']$/g, '');
+if (MONGODB_URI.startsWith('MONGODB_URI=')) {
+    MONGODB_URI = MONGODB_URI.replace('MONGODB_URI=', '').trim().replace(/^["']|["']$/g, '');
+}
 
 if (!MONGODB_URI) {
     console.error('❌ MONGODB_URI is missing from .env');
