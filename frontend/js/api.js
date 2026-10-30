@@ -1,8 +1,6 @@
 // frontend/js/api.js
 
-const API_BASE_URL = window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1')
-  ? `${window.location.origin}/api`
-  : 'http://localhost:5000/api';
+const API_BASE_URL = `${window.location.origin}/api`;
 
 async function apiRequest(endpoint, method = 'GET', data = null, isMultipart = false) {
   const headers = {};
