@@ -270,6 +270,16 @@ function initSidebarToggle() {
       overlay.classList.remove('visible');
     });
   }
+  if (sidebar) {
+    sidebar.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', () => {
+        if (window.innerWidth <= 1024) {
+          sidebar.classList.remove('open');
+          overlay?.classList.remove('visible');
+        }
+      });
+    });
+  }
 }
 window.initSidebarToggle = initSidebarToggle;
 
