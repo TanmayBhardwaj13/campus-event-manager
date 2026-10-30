@@ -25,18 +25,22 @@ if (MONGODB_URI.startsWith('MONGODB_URI=')) {
     MONGODB_URI = MONGODB_URI.replace('MONGODB_URI=', '').trim().replace(/^["']|["']$/g, '');
 }
 
-if (!MONGODB_URI) {
-    console.error('❌ MONGODB_URI is missing from .env');
-    process.exit(1);
-}
+let lastMongoError = null;
 
-mongoose.connect(MONGODB_URI)
-    .then(() => {
-        console.log('✅ MongoDB Connected');
-    })
-    .catch((error) => {
-        console.error('❌ MongoDB Connection Error:', error.message);
-    });
+if (!MONGODB_URI) {
+    lastMongoError = 'MONGODB_URI is missing from environment variables';
+    console.error('❌ MONGODB_URI is missing from .env');
+} else {
+    mongoose.connect(MONGODB_URI)
+        .then(() => {
+            lastMongoError = null;
+            console.log('✅ MongoDB Connected');
+        })
+        .catch((error) => {
+            lastMongoError = error.message;
+            console.error('❌ MongoDB Connection Error:', error.message);
+        });
+}
 
 // API Routes
 app.use('/api/auth', require('./src/routes/auth'));
@@ -49,8 +53,11 @@ app.use('/api/public', require('./src/routes/public'));
 app.get('/api', (req, res) => {
     res.json({
         message: 'Campus Event Manager API is running',
-        version: '1.0.0',
-        status: 'ok'
+        version: '1.0.2',
+        status: 'ok',
+        mongoState: mongoose.connection.readyState,
+        mongoConnected: mongoose.connection.readyState === 1,
+        mongoError: lastMongoError
     });
 });
 
